@@ -13,6 +13,7 @@ adminRouter.get("/staging/downstream-vendors", async (_req, res) => {
   res.json(rows);
 });
 
+// add note
 adminRouter.patch("/staging/downstream-vendors/:id", async (req, res) => {
   const row = await prisma.stagingDownstreamVendor.update({
     where: { id: Number(req.params.id) },
