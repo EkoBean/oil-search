@@ -1,0 +1,8 @@
+node_modules/
+dist/
+.env
+data/
+*.db
+*.db-journal
+packages/server/prisma/dev.db*
+source data/_archive/

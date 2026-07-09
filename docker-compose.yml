@@ -1,0 +1,17 @@
+services:
+  server:
+    build:
+      context: .
+      dockerfile: packages/server/Dockerfile
+    ports:
+      - "3000:3000"
+    env_file:
+      - packages/server/.env
+    volumes:
+      - "./data:/data"
+      - "./source data:/app/source data"
+      - "./output:/app/output"
+    environment:
+      DATABASE_URL: "file:/data/oil-search.db"
+      REPO_ROOT: "/app"
+      PYTHON_BIN: "python3"

@@ -1,0 +1,7 @@
+{
+  "name": "oil-search",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ]
+}

@@ -1,0 +1,104 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// 追蹤每份來源 PDF 的下載/處理狀態，PDF 版本判斷靠 sha256 比對
+model SourceDocument {
+  id          Int      @id @default(autoincrement())
+  docType     String // downstream_vendors | recall_products | affected_oils
+  sourceUrl   String
+  filePath    String // 存檔路徑（每個版本都保留，不覆蓋）
+  sha256      String
+  status      String // new | extracted | pending_review | published | failed
+  fetchedAt   DateTime @default(now())
+  processedAt DateTime?
+  errorMessage String?
+
+  @@index([docType, sha256])
+}
+
+// ---------- 下游業者清單 ----------
+model StagingDownstreamVendor {
+  id           Int      @id @default(autoincrement())
+  sourceDocId  Int
+  seq          String // 序號
+  county       String // 縣市
+  vendor       String // 業者
+  item         String // 品項
+  lotNumber    String // 批號
+  expiryDate   String // 有效日期
+  note         String? // 備註（extract_pdfs.py 標記待複核的列）
+  reviewedNote String? // 管理員審核時補充的備註
+  createdAt    DateTime @default(now())
+}
+
+model DownstreamVendor {
+  id           Int      @id @default(autoincrement())
+  seq          String
+  county       String
+  vendor       String
+  item         String
+  lotNumber    String
+  expiryDate   String
+  note         String?
+  publishedAt  DateTime @default(now())
+
+  @@index([county])
+  @@index([lotNumber])
+}
+
+// ---------- 預防性下架產品清單 ----------
+model StagingRecallProduct {
+  id          Int      @id @default(autoincrement())
+  sourceDocId Int
+  vendorSeq   String // 業者序號
+  county      String // 縣市
+  vendor      String // 業者
+  productSeq  String // 產品序號
+  productName String // 產品名稱
+  expiryDate  String // 有效日期
+  createdAt   DateTime @default(now())
+}
+
+model RecallProduct {
+  id          Int      @id @default(autoincrement())
+  vendorSeq   String
+  county      String
+  vendor      String
+  productSeq  String
+  productName String
+  expiryDate  String
+  publishedAt DateTime @default(now())
+
+  @@index([productName])
+}
+
+// ---------- 受影響油品資訊（圖配文 PDF，純人工輸入） ----------
+model StagingAffectedOil {
+  id          Int      @id @default(autoincrement())
+  sourceDocId Int
+  brand       String? // 廠牌
+  productName String // 產品名稱
+  lotNumber   String // 批號/產品序號
+  expiryDate  String? // 有效日期
+  note        String?
+  enteredBy   String // 手動輸入的管理員
+  createdAt   DateTime @default(now())
+}
+
+model AffectedOil {
+  id          Int      @id @default(autoincrement())
+  brand       String?
+  productName String
+  lotNumber   String
+  expiryDate  String?
+  note        String?
+  publishedAt DateTime @default(now())
+
+  @@index([lotNumber])
+}
