@@ -72,7 +72,7 @@ adminRouter.get("/staging/downstream-vendors", async (_req, res) => {
   res.json(rows);
 });
 
-// add note
+// add note (one-by-one)
 adminRouter.patch("/staging/downstream-vendors/:id", async (req, res) => {
   const row = await prisma.stagingDownstreamVendor.update({
     where: { id: Number(req.params.id) },
@@ -125,34 +125,31 @@ adminRouter.post("/publish/recall-products", async (_req, res) => {
   res.json({ published: staged.length });
 });
 
-// ---------- 受影響油品資訊（純人工輸入）----------
+// ---------- 受影響油品資訊（純前端表單輸入，無 staging）----------
 
-adminRouter.get("/staging/affected-oils", async (_req, res) => {
-  const rows = await prisma.stagingAffectedOil.findMany({ orderBy: { id: "asc" } });
-  res.json(rows);
-});
+// 前端表單一次送出整份清單，管理員確認後直接覆蓋發布，不經過 staging 審核。
+adminRouter.post("/publish/affected-oils", async (req, res) => {
+  const { oils } = req.body;
+  if (!Array.isArray(oils)) {
+    return res.status(400).json({ error: "缺少 oils 陣列" });
+  }
+  for (const [i, oil] of oils.entries()) {
+    if (!oil.productName || !oil.lotNumber) {
+      return res.status(400).json({ error: `第 ${i + 1} 筆缺少 productName 或 lotNumber` });
+    }
+  }
 
-adminRouter.post("/staging/affected-oils", async (req, res) => {
-  const { sourceDocId, brand, productName, lotNumber, expiryDate, note, enteredBy } = req.body;
-  const row = await prisma.stagingAffectedOil.create({
-    data: { sourceDocId, brand, productName, lotNumber, expiryDate, note, enteredBy },
-  });
-  res.status(201).json(row);
-});
-
-adminRouter.post("/publish/affected-oils", async (_req, res) => {
-  const staged = await prisma.stagingAffectedOil.findMany();
   await prisma.$transaction([
     prisma.affectedOil.deleteMany(),
     prisma.affectedOil.createMany({
-      data: staged.map((r) => ({
-        brand: r.brand,
+      data: oils.map((r) => ({
+        brand: r.brand ?? null,
         productName: r.productName,
         lotNumber: r.lotNumber,
-        expiryDate: r.expiryDate,
-        note: r.note,
+        expiryDate: r.expiryDate ?? null,
+        note: r.note ?? null,
       })),
     }),
   ]);
-  res.json({ published: staged.length });
+  res.json({ published: oils.length });
 });

@@ -13,10 +13,6 @@ const OUTPUT_FILENAMES = {
   recall_products: "預防性下架產品清單.csv",
 };
 
-/**
- * 執行 extract_pdfs.py，處理單一 docType 的來源 PDF。
- * 不論 PDF 是每小時輪詢下載的，還是後台手動上傳的，呼叫端只要給 docType + 檔案路徑即可。
- */
 export async function runExtractPdfs({ docType, inputPath }) {
   const outputFileName = OUTPUT_FILENAMES[docType];
   if (!outputFileName) {

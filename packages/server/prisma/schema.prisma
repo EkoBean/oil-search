@@ -83,18 +83,7 @@ model RecallProduct {
 }
 
 // ---------- 受影響油品資訊（圖配文 PDF，純人工輸入） ----------
-model StagingAffectedOil {
-  id          Int      @id @default(autoincrement())
-  sourceDocId Int
-  brand       String? // 廠牌
-  productName String // 產品名稱
-  lotNumber   String // 批號/產品序號
-  expiryDate  String? // 有效日期
-  note        String?
-  enteredBy   String // 手動輸入的管理員
-  createdAt   DateTime @default(now())
-}
-
+// 純前端表單輸入，管理員確認後直接呼叫 /publish/affected-oils，不經過 staging 審核流程。
 model AffectedOil {
   id          Int      @id @default(autoincrement())
   brand       String?

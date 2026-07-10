@@ -15,15 +15,11 @@ export async function markStatus(sourceDocId, status, errorMessage = null) {
   });
 }
 
-/**
- * 跑 extract_pdfs.py 並把結果寫進對應的 staging table。
- * 不論 sourceDoc 是每小時輪詢下載的，還是後台手動上傳的，走到這一步都是同一套邏輯。
- */
 export async function extractAndStage(sourceDoc) {
   const config = STAGING_LOADERS[sourceDoc.docType];
   if (!config) {
     throw new Error(
-      `docType「${sourceDoc.docType}」沒有對應的 staging 流程（受影響油品資訊是純人工輸入，不會走到這裡）`
+      `docType「${sourceDoc.docType}」沒有對應的 staging 流程。`
     );
   }
 
