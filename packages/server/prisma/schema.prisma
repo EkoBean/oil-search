@@ -10,7 +10,6 @@ datasource db {
 // 追蹤每份來源 PDF 的下載/處理狀態。
 // 版本判斷靠比對 downloadUrl 裡的 fileId（GetFile.ashx?id=... 的 id 參數）——
 // 每小時輪詢只解析 HTML 列表頁拿這個連結字串比對，連結沒變就不下載 PDF。
-// sha256 只在真的下載後才算，純粹備查/除錯用，不參與版本判斷。
 model SourceDocument {
   id           Int      @id @default(autoincrement())
   docType      String // downstream_vendors | recall_products | affected_oils
@@ -18,7 +17,6 @@ model SourceDocument {
   downloadUrl  String // 解析出的 PDF 下載連結（GetFile.ashx?...）
   fileId       String // 從 downloadUrl 解析出的 id 參數，版本判斷用
   filePath     String? // 存檔路徑（每個版本都保留，不覆蓋）；只有真的下載過才有值
-  sha256       String? // 只在下載後才算
   status       String // link_only | new | extracted | pending_review | published | failed
   checkedAt    DateTime @default(now())
   downloadedAt DateTime?

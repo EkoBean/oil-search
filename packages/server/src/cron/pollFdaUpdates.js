@@ -1,19 +1,10 @@
 import { checkForNewVersion } from "../ingest/checkForNewVersion.js";
 import { downloadPdf } from "../ingest/downloadPdf.js";
-import { runExtractPdfs } from "../ingest/runExtractPdfs.js";
-import { loadDownstreamVendorsStaging, loadRecallProductsStaging } from "../ingest/loadStagingFromCsv.js";
+import { extractAndStage, markStatus } from "../ingest/extractAndStage.js";
 import { notifyAdmin } from "../notify/discord.js";
-import { prisma } from "../lib/prisma.js";
 
 const DOWNSTREAM_AND_OILS_PAGE = process.env.FDA_DOWNSTREAM_AND_OILS_URL;
 const RECALL_LIST_PAGE = process.env.FDA_RECALL_LIST_URL;
-
-async function markStatus(sourceDocId, status, errorMessage = null) {
-  await prisma.sourceDocument.update({
-    where: { id: sourceDocId },
-    data: { status, processedAt: new Date(), errorMessage },
-  });
-}
 
 /**
  * 每小時只做「抓列表頁 HTML + 比對下載連結的 fileId」這種輕量檢查，
@@ -40,7 +31,7 @@ export async function pollFdaUpdates() {
         downloadUrl,
         fileId,
       });
-      await extractAndStage(sourceDoc.id, loadDownstreamVendorsStaging, "下游業者清單");
+      await extractAndStage(sourceDoc);
     }
   } catch (err) {
     console.error("[cron] 下游業者清單檢查失敗:", err);
@@ -84,7 +75,7 @@ export async function pollFdaUpdates() {
         downloadUrl,
         fileId,
       });
-      await extractAndStage(sourceDoc.id, loadRecallProductsStaging, "預防性下架產品清單");
+      await extractAndStage(sourceDoc);
     }
   } catch (err) {
     console.error("[cron] 預防性下架清單檢查失敗:", err);
@@ -93,18 +84,5 @@ export async function pollFdaUpdates() {
 
   if (!downstreamChanged && !recallChanged) {
     console.log("[cron] 連結都沒有變化，沒有下載任何 PDF");
-  }
-}
-
-async function extractAndStage(sourceDocId, loadStagingFn, label) {
-  try {
-    await runExtractPdfs();
-    const count = await loadStagingFn(sourceDocId);
-    await markStatus(sourceDocId, "pending_review");
-    await notifyAdmin(`✅ ${label} 偵測到新版本，已解析 ${count} 筆資料到 staging，請至後台審核`);
-  } catch (err) {
-    await markStatus(sourceDocId, "failed", err.message);
-    await notifyAdmin(`⚠️ ${label} 解析失敗: ${err.message}`);
-    throw err;
   }
 }

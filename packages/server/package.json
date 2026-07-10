@@ -16,7 +16,8 @@
     "node-cron": "^3.0.3",
     "dotenv": "^16.4.5",
     "cheerio": "^1.0.0",
-    "csv-parse": "^5.5.6"
+    "csv-parse": "^5.5.6",
+    "multer": "^2.0.0"
   },
   "devDependencies": {
     "prisma": "^6.9.0"

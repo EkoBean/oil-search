@@ -1,24 +1,26 @@
 # -*- coding: utf-8 -*-
 """
-快速原型：用 pdfplumber 把 source data 裡的兩份 PDF 整理成資料表 (CSV)。
+用 pdfplumber 把單一來源 PDF 整理成資料表 (CSV)。輸入/輸出路徑與 doc type 都由外部呼叫端
+(Node server 的 ingest/runExtractPdfs.js，不論來源是每小時輪詢下載還是後台手動上傳) 傳入，
+本檔案本身不認識 source data/ 或 output/ 這兩個固定路徑。
 
-1. 下游業者360家清單_(截至7月9日).pdf
+支援的 --doc-type:
+
+1. downstream_vendors (下游業者360家清單)
    欄位: 序號, 縣市, 業者, 品項, 批號, 有效日期
    - 同一業者有多項產品時，序號/縣市/業者 只在第一列出現，之後為 None -> 需要 forward fill
    - 同一產品有多個批號/有效日期時，儲存格內用 \n 分隔多筆 -> 展開成多列
    - 少數列品項也是 None -> 視為延續前一列的品項 (只是多列出批號/日期)
    - 頁面第一列的標題文字、每頁重複的表頭列、最後的備註列 -> 過濾掉
 
-2. 預防性下架產品清單.pdf
+2. recall_products (預防性下架產品清單)
    欄位: 業者序號, 縣市, 業者, 產品序號, 產品名稱, 有效日期
    - 每一列資料完整，不需要 forward fill
    - 有效日期欄位偶爾用 \n 換行包住過長文字 (用頓號分隔的多個日期) -> 直接去除換行即可
 """
+import argparse
 import csv
 import pdfplumber
-
-SRC_DIR = "source data"
-OUT_DIR = "output"
 
 HEADER_1 = ["序號", "縣市", "業者", "品項", "批號", "有效日期"]
 HEADER_2 = ["業者序號", "縣市", "業者", "產品序號", "產品名稱", "有效日期"]
@@ -136,23 +138,43 @@ def write_csv(path, fieldnames, records):
         writer.writerows(records)
 
 
+DOC_TYPES = {
+    "downstream_vendors": {
+        "cleaner": clean_downstream_list,
+        "fieldnames": ["序號", "縣市", "業者", "品項", "批號", "有效日期", "備註"],
+    },
+    "recall_products": {
+        "cleaner": clean_recall_list,
+        "fieldnames": ["業者序號", "縣市", "業者", "產品序號", "產品名稱", "有效日期"],
+    },
+}
+
+
+def process(doc_type, input_path, output_path):
+    config = DOC_TYPES[doc_type]
+    rows = extract_raw_tables(input_path)
+    records = config["cleaner"](rows)
+    write_csv(output_path, config["fieldnames"], records)
+    return records
+
+
 def main():
-    rows1 = extract_raw_tables(f"{SRC_DIR}/下游業者360家清單_(截至7月9日).pdf")
-    records1 = clean_downstream_list(rows1)
-    write_csv(f"{OUT_DIR}/下游業者清單.csv",
-              ["序號", "縣市", "業者", "品項", "批號", "有效日期", "備註"], records1)
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--doc-type", required=True, choices=sorted(DOC_TYPES),
+                         help="來源 PDF 屬於哪一種格式")
+    parser.add_argument("--input", required=True, help="來源 PDF 路徑")
+    parser.add_argument("--output", required=True, help="輸出 CSV 路徑")
+    args = parser.parse_args()
 
-    rows2 = extract_raw_tables(f"{SRC_DIR}/預防性下架產品清單.pdf")
-    records2 = clean_recall_list(rows2)
-    write_csv(f"{OUT_DIR}/預防性下架產品清單.csv",
-              ["業者序號", "縣市", "業者", "產品序號", "產品名稱", "有效日期"], records2)
+    records = process(args.doc_type, args.input, args.output)
 
-    distinct_biz = {r["序號"] for r in records1 if r["序號"] is not None}
-    flagged = [r for r in records1 if r["備註"]]
-
-    print(f"下游業者清單: {len(records1)} 列 (展開後), 涵蓋 {len(distinct_biz)} 個業者序號")
-    print(f"  其中需人工複核: {len(flagged)} 列")
-    print(f"預防性下架產品清單: {len(records2)} 列")
+    if args.doc_type == "downstream_vendors":
+        distinct_biz = {r["序號"] for r in records if r["序號"] is not None}
+        flagged = [r for r in records if r["備註"]]
+        print(f"下游業者清單: {len(records)} 列 (展開後), 涵蓋 {len(distinct_biz)} 個業者序號")
+        print(f"  其中需人工複核: {len(flagged)} 列")
+    else:
+        print(f"預防性下架產品清單: {len(records)} 列")
 
 
 if __name__ == "__main__":
