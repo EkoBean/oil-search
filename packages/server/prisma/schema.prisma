@@ -83,14 +83,13 @@ model RecallProduct {
 }
 
 // ---------- 受影響油品資訊（圖配文 PDF，純人工輸入） ----------
-// 純前端表單輸入，管理員確認後直接呼叫 /publish/affected-oils，不經過 staging 審核流程。
 model AffectedOil {
   id          Int      @id @default(autoincrement())
   brand       String?
+  productPicPath String?
   productName String
   lotNumber   String
   expiryDate  String?
-  note        String?
   publishedAt DateTime @default(now())
 
   @@index([lotNumber])

@@ -1,0 +1,12 @@
+.git/
+node_modules/
+dist/
+.env
+.env.example
+data/
+*.db
+*.db-journal
+source data/
+output/
+packages/admin-web/
+packages/public-web/

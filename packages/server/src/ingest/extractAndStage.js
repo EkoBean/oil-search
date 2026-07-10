@@ -28,6 +28,7 @@ export async function extractAndStage(sourceDoc) {
     const count = await config.load(sourceDoc.id);
     await markStatus(sourceDoc.id, "pending_review");
     // await notifyAdmin(`Extraction Success ${config.label} 已解析 ${count} 筆資料到 staging，請至後台審核`);
+    console.log("Extraction & staging table successed(/ingest/extractAndStage.js)");
     return count;
   } catch (err) {
     await markStatus(sourceDoc.id, "failed", err.message);

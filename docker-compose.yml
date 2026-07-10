@@ -8,10 +8,9 @@ services:
     env_file:
       - packages/server/.env
     volumes:
-      - "./data:/data"
+      - "./packages/server/data:/app/packages/server/data"
       - "./source data:/app/source data"
       - "./output:/app/output"
     environment:
-      DATABASE_URL: "file:/data/oil-search.db"
       REPO_ROOT: "/app"
       PYTHON_BIN: "python3"

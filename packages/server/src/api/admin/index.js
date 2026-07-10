@@ -2,12 +2,13 @@ import { Router } from "express";
 import multer from "multer";
 import { prisma } from "../../lib/prisma.js";
 import { uploadManualPdf } from "../../ingest/uploadManualPdf.js";
+import { affectedOilPicUpload, saveAffectedOilPic, listAffectedOilPics } from "../../images/affectedOilPics.js";
 
 export const adminRouter = Router();
 
 // TODO: 這一整個 router 目前沒有任何登入驗證，正式上線前一定要加
 // session/JWT 之類的機制，並且套用在 index.js mount 這個 router 的地方。
-
+// 目前先不上線這個API
 
 // Each multer file contains the following information:
 // Key	Description	Note
@@ -127,6 +128,28 @@ adminRouter.post("/publish/recall-products", async (_req, res) => {
 
 // ---------- 受影響油品資訊（純前端表單輸入，無 staging）----------
 
+// 上傳一張油品外觀照片到圖庫；multipart 解析、存檔、檔名、圖庫邏輯都在 images/affectedOilPics.js，
+// 這裡只負責接上 Express pipeline、把結果丟回去。
+adminRouter.post("/affected-oil-pics", (req, res, next) => {
+  affectedOilPicUpload(req, res, (err) => {
+    if (err) {
+      return res.status(400).json({ error: err.message });
+    }
+    next();
+  });
+}, async (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ error: "缺少上傳檔案 (file)" });
+  }
+  const result = await saveAffectedOilPic({ buffer: req.file.buffer, originalName: req.file.originalname });
+  res.status(201).json(result);
+});
+
+// 圖庫列表：讓後台在「新增/編輯油品」表單裡可以直接勾選既有照片，不用每筆都重新上傳。
+adminRouter.get("/affected-oil-pics", async (_req, res) => {
+  res.json(await listAffectedOilPics());
+});
+
 // 前端表單一次送出整份清單，管理員確認後直接覆蓋發布，不經過 staging 審核。
 adminRouter.post("/publish/affected-oils", async (req, res) => {
   const { oils } = req.body;
@@ -144,10 +167,10 @@ adminRouter.post("/publish/affected-oils", async (req, res) => {
     prisma.affectedOil.createMany({
       data: oils.map((r) => ({
         brand: r.brand ?? null,
+        productPicPath: r.productPicPath ?? null,
         productName: r.productName,
         lotNumber: r.lotNumber,
         expiryDate: r.expiryDate ?? null,
-        note: r.note ?? null,
       })),
     }),
   ]);
