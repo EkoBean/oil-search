@@ -157,8 +157,8 @@ adminRouter.post("/publish/affected-oils", async (req, res) => {
     return res.status(400).json({ error: "缺少 oils 陣列" });
   }
   for (const [i, oil] of oils.entries()) {
-    if (!oil.productName || !oil.lotNumber) {
-      return res.status(400).json({ error: `第 ${i + 1} 筆缺少 productName 或 lotNumber` });
+    if (!oil.productName || !oil.lotNumber || !oil.expiryDate) {
+      return res.status(400).json({ error: `第 ${i + 1} 筆缺少 產品名稱、批號或有效日期`  });
     }
   }
 
