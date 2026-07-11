@@ -47,7 +47,6 @@ export async function fetchStaging(docType) {
 }
 
 /**
- * 把某 docType 的 staging 資料整批發佈（覆蓋現有已公開資料）。
  * @param {string} docType 'recall_products' | 'downstream_vendors'
  * @returns {Promise<{published: number}>}
  */
@@ -56,8 +55,7 @@ export async function publishStaging(docType) {
 }
 
 /**
- * 取得目前已發佈的受影響油品清單（走 public API），
- * 讓編輯表單從現況出發，而不是每次都從空白重填。
+ * GET /api/public/affected-oils
  * @returns {Promise<object[]>}
  */
 export async function fetchPublishedAffectedOils() {
@@ -65,7 +63,7 @@ export async function fetchPublishedAffectedOils() {
 }
 
 /**
- * 取得油品外觀照片圖庫列表。
+ * GET /api/admin/affected-oil-pics
  * @returns {Promise<{filename: string, path: string, uploadedAt: string}[]>}
  */
 export async function fetchAffectedOilPics() {
@@ -73,7 +71,7 @@ export async function fetchAffectedOilPics() {
 }
 
 /**
- * 上傳一張油品外觀照片到圖庫。
+ * POST api/admin/affected-oil-pics
  * @param {File} file JPEG / PNG / WebP 圖片
  * @returns {Promise<{filename: string, path: string}>}
  */
@@ -84,7 +82,7 @@ export async function uploadAffectedOilPic(file) {
 }
 
 /**
- * 整批發佈受影響油品（覆蓋現有已公開資料，不經過 staging）。
+ * POST api/admin/publish/affected-oils
  * @param {object[]} oils { brand?, productPicPath?, productName, lotNumber, expiryDate }
  * @returns {Promise<{published: number}>}
  */
@@ -97,7 +95,7 @@ export async function publishAffectedOils(oils) {
 }
 
 /**
- * 更新單筆下游業者 staging 列的審核備註。
+ * PATCH edit note
  * @param {number} id staging 列 id
  * @param {string} reviewedNote 管理員補充的備註
  * @returns {Promise<object>} 更新後的資料列

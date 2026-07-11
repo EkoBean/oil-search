@@ -26,8 +26,10 @@ function rowToFormValue(row) {
 export default function AffectedOilsPage() {
   const { message } = App.useApp()
   const [form] = Form.useForm()
-  const [loading, setLoading] = useState(true)
   const [publishing, setPublishing] = useState(false)
+  // 表單初始值；null 表示還在載入（Form 尚未渲染，所以不能用 setFieldsValue 塞值，
+  // 要等 Form 掛載時用 initialValues 一次帶入，否則 antd 會警告 form 沒接到 Form 元素）
+  const [initialOils, setInitialOils] = useState(null)
   // 確認 modal 要顯示的整批資料；null 表示 modal 關閉
   const [pendingOils, setPendingOils] = useState(null)
 
@@ -35,14 +37,13 @@ export default function AffectedOilsPage() {
   useEffect(() => {
     fetchPublishedAffectedOils()
       .then((rows) => {
-        form.setFieldsValue({ oils: rows.length > 0 ? rows.map(rowToFormValue) : [{}] })
+        setInitialOils(rows.length > 0 ? rows.map(rowToFormValue) : [{}])
       })
       .catch((err) => {
         message.error(`載入現有資料失敗：${err.message}`)
-        form.setFieldsValue({ oils: [{}] })
+        setInitialOils([{}])
       })
-      .finally(() => setLoading(false))
-  }, [form, message])
+  }, [message])
 
   // 驗證通過後先開確認 modal，按下確認才真的發佈
   const handleSubmit = (values) => {
@@ -78,10 +79,10 @@ export default function AffectedOilsPage() {
           此清單不經過審核流程，按下發佈後會直接覆蓋公開站上的整份受影響油品資料。
         </Typography.Text>
 
-        {loading ? (
+        {initialOils === null ? (
           <Spin />
         ) : (
-          <Form form={form} onFinish={handleSubmit} autoComplete="off">
+          <Form form={form} initialValues={{ oils: initialOils }} onFinish={handleSubmit} autoComplete="off">
             <Form.List name="oils">
               {(fields, { add, remove }) => (
                 <Flex vertical gap="small">
