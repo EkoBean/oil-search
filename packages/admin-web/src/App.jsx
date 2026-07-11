@@ -5,6 +5,7 @@ import zhTW from 'antd/locale/zh_TW'
 
 import UploadPage from './pages/UploadPage/UploadPage.jsx'
 import StagingPage from './pages/StagingPage/StagingPage.jsx'
+import AffectedOilsPage from './pages/AffectedOilsPage/AffectedOilsPage.jsx'
 import Home from './pages/Home/Home.jsx'
 
 function App() {
@@ -18,6 +19,7 @@ function App() {
             <Route path="/" element={<UploadPage />} />
             <Route path="/upload" element={<UploadPage />} />
             <Route path="/staging" element={<StagingPage />} />
+            <Route path="/affected-oils" element={<AffectedOilsPage />} />
           </Routes>
         </Router>
       </AntdApp>

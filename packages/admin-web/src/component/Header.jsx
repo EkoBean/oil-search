@@ -11,7 +11,7 @@ export default function Header() {
                 <ul>
                     <li onClick={() => navigate('/upload')}>資料上傳</li>
                     <li onClick={() => navigate('/staging')}>資料審核</li>
-                    <li>受影響油品編輯</li>
+                    <li onClick={() => navigate('/affected-oils')}>受影響油品編輯</li>
                 </ul>
             </div>
         </header>

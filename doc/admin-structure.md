@@ -11,7 +11,10 @@ packages/admin-web/src/
 │   │   ├── ReviewModal.jsx       # 審核表單
 │   │   └── EditNoteModal.jsx     # downstream 專用 編輯備註
 │   └── AffectedOilsPage/
-│       └── AffectedOilsPage.jsx  # 直接編輯受影響油品並寫入資料庫
+│       ├── AffectedOilsPage.jsx  # 動態列表單，送出前先開確認 modal，確認才 publish（整批覆蓋）
+│       ├── PicField.jsx          # 表單裡的照片欄位（縮圖 + 開圖庫）
+│       ├── PicPickerModal.jsx    # 圖庫 modal：勾選既有照片或當場上傳
+│       └── ConfirmPublishModal.jsx # 發佈前最後確認的表格預覽
 └── components/          # 跨頁共用的才放這裡
     ├── Layout.jsx       # 側邊欄/導覽列
     ├── Modal.jsx        # 通用 modal 外殼（backdrop + close 邏輯）
