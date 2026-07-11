@@ -43,7 +43,7 @@ export const FAQ = [
     a: (
       <>
         <p>
-          苯駢芘(ㄆ一ˊ)（Benzo[a]pyrene）是多環芳香族碳氫化合物（PAHs）的一種，通常在高溫加熱過程中產生，例如煙燻、乾燥、烘焙、燒烤等加工製程。
+          苯駢芘(ㄆ一ˊ)（Benzo(a)pyrene）是多環芳香族碳氫化合物（PAHs）的一種，通常在高溫加熱過程中產生，例如煙燻、乾燥、烘焙、燒烤等加工製程。
           <br/>
           國際癌症研究署（IARC）將多種PAHs列為
           <a href={FDA_LINKS.iarc} target="_blank" rel="noopener noreferrer">第 1 級致癌物</a>其中以苯駢芘之致癌性最強。
@@ -108,7 +108,8 @@ export const FAQ = [
           本站為民間整理的<b>非官方網站</b>，資料更新可能有延遲，各查詢頁都標有本站的資料更新時間，且一切以食藥署公告為準。
         </p>
         <p>
-          其餘詳細的Q&A可前往 <a href="https://www.fda.gov.tw/TC/siteContent.aspx?sid=13714">食藥署宣導資料Q&A</a>
+          其餘詳細的Q&A可前往 
+          <a href={FDA_LINKS.qa} target="_blank" rel="noopener noreferrer">食藥署宣導資料Q&A</a>
         </p>
       </>
     ),

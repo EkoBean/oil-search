@@ -24,7 +24,7 @@ export default function Footer() {
                     </a>
                 </li>
                 <li>
-                    食品安全疑慮請撥食品專線 <a href="tel:1919">1919</a>
+                    食品安全疑慮請撥食藥署諮詢專線 <a href="tel:1919">1919</a>
                 </li>
             </ul>
         </footer>

@@ -468,8 +468,26 @@ footer a {
 }
 
 /* ---------- 回首頁泡泡 ---------- */
-.back-to-home-btn{
-  display: fixed;
+/* 同一個 class 給兩種元素用：查詢頁是 <Link>，首頁是回頂端的 <button>，
+   所以要把 button 的預設外框／字型抹掉 */
+.back-to-home-btn {
+  border: none;
+  cursor: pointer;
+  font: inherit;
+  position: fixed;
+  right: max(16px, env(safe-area-inset-right));
+  bottom: max(16px, env(safe-area-inset-bottom));
+  z-index: 90; /* 低於 sticky header 的 100 */
+  width: 64px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   background-color: var(--accent);
   border-radius: 50%;
+  color: var(--text-h);
+  text-decoration: none;
+  font-size: 15px;
+  font-weight: 600;
+  box-shadow: var(--shadow);
 }

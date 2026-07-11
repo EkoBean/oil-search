@@ -6,8 +6,6 @@ import { FAQ } from "../../content/faq";
 import { RETURN_INFO, RETURN_INFO_NOTE } from "../../content/returnInfo";
 import { FDA_LINKS } from "../../config";
 
-// Hero 的回收噸數。RecallStat 每個事件一列；目前只有一個事件，
-// 多事件時加總顯示、下面逐列標各自的統計截至時間。
 function RecallHero() {
   const { recallStats, loading } = useData();
   const total = recallStats.reduce((sum, r) => sum + r.recalledTonnage, 0);
@@ -29,8 +27,6 @@ function RecallHero() {
   );
 }
 
-// 三個查詢頁的入口卡。副標把官方名詞翻成大眾語言，
-// 「不代表檢出超標」這句是刻意放在入口就講，避免清單被誤讀。
 function EntryCards() {
   const { affectedOils, recallProducts, downstreamVendors, loading } = useData();
   const cards = [
@@ -131,17 +127,16 @@ function ReturnInfoTable() {
   );
 }
 
-// 食藥署最新公告前三筆（來自 /api/public/news，server 端爬專區「最新消息」列表的快取）。
-// 只列標題＋日期，點了連回食藥署的新聞原頁看全文。
+// GET api/public/news
 function NewsSection() {
   const { news, loading, failed } = useData();
   if (!loading && (failed.includes("news") || news.length === 0)) {
-    return null; // FDA 掛掉或沒資料就整段不顯示，不放錯誤訊息嚇人
+    return null; 
   }
 
   return (
     <section className="news">
-      <h2>食藥署最新公告</h2>
+      <h2>食藥署中聯油脂案專區新聞</h2>
       <ul className="news-list">
         {news.slice(0, 3).map((item) => (
           <li key={item.url} className="news-item">
@@ -153,8 +148,8 @@ function NewsSection() {
         ))}
       </ul>
       <p className="news-more">
-        <a href={FDA_LINKS.incidentHome} target="_blank" rel="noopener noreferrer">
-          前往食藥署中聯油脂案專區，看全部公告 →
+        <a href={FDA_LINKS.news} target="_blank" rel="noopener noreferrer">
+          前往食藥署中聯油脂案專區，查看全部新聞 →
         </a>
       </p>
     </section>
