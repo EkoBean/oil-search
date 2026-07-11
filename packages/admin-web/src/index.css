@@ -1,27 +1,12 @@
 /* admin-web 專屬樣式。共用的 tokens/基礎樣式來自 @oil-search/ui（見 main.jsx 引入順序），
    要覆寫共用變數（例如換主色）就在這裡重新宣告 :root { --accent: ...; } */
 
-#root {
-  width: 1126px;
-  max-width: 100%;
-  margin: 0 auto;
-  text-align: center;
-  border-inline: 1px solid var(--border);
-  min-height: 100svh;
-  display: flex;
-  flex-direction: column;
+
+.page-body {
+  width: 100%;
+  max-width: 960px;
+  margin-inline: auto;
   box-sizing: border-box;
 }
 
-.counter {
-  font-family: var(--mono);
-  display: inline-flex;
-  border-radius: 4px;
-  color: var(--text-h);
-}
 
-@media (prefers-color-scheme: dark) {
-  #social .button-icon {
-    filter: invert(1) brightness(2);
-  }
-}

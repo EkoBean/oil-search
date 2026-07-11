@@ -64,7 +64,7 @@ export default function UploadPage() {
   return (
     <>
       <Header />
-      <Flex vertical gap="large" style={{ padding: '24px 28px 48px', textAlign: 'left' }}>
+      <Flex vertical gap="large" className="page-body" style={{ padding: '24px 28px 48px', textAlign: 'left' }}>
         <Typography.Title level={2} style={{ margin: 0 }}>資料上傳</Typography.Title>
         {UPLOAD_SECTIONS.map((section) => (
           <UploadSection key={section.docType} {...section} />

@@ -54,7 +54,7 @@ export default function StagingPage() {
   return (
     <>
       <Header />
-      <Flex vertical gap="large" style={{ padding: '24px 28px 48px', textAlign: 'left' }}>
+      <Flex vertical gap="large" className="page-body" style={{ padding: '24px 28px 48px', textAlign: 'left' }}>
         <Typography.Title level={2} style={{ margin: 0 }}>資料審核</Typography.Title>
         {SECTIONS.map(({ docType, title }) => {
           const summary = summaries[docType]

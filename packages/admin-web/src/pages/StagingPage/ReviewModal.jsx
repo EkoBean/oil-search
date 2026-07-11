@@ -142,13 +142,12 @@ export default function ReviewModal({ docType, onClose }) {
           )}
           <Table
             rowKey="id"
-            size="small"
+            size="medium"
             columns={columns}
             dataSource={visibleRows}
             loading={loading}
             pagination={false}
-            // 90vh 扣掉 modal 標題、footer、搜尋列、表頭的高度，讓整個 modal 不超出視窗
-            scroll={{ y: 'calc(90vh - 280px)' }}
+            scroll={{ y: 'calc(95vh - 280px)' }}
           />
         </>
       )}

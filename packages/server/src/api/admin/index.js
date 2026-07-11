@@ -150,7 +150,7 @@ adminRouter.get("/affected-oil-pics", async (_req, res) => {
   res.json(await listAffectedOilPics());
 });
 
-// 前端表單一次送出整份清單，管理員確認後直接覆蓋發布，不經過 staging 審核。
+// 前端表單一次送出整份清單，管理員確認後直接覆蓋發布。
 adminRouter.post("/publish/affected-oils", async (req, res) => {
   const { oils } = req.body;
   if (!Array.isArray(oils)) {
