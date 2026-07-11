@@ -85,6 +85,10 @@ header {
     gap: 1.2rem;
     li{
       cursor: pointer;
+      transition: 0.2s ;
+    }
+    li:hover{
+      color:var(--text-h)
     }
   }
 }

@@ -3,6 +3,7 @@ import multer from "multer";
 import { prisma } from "../../lib/prisma.js";
 import { uploadManualPdf } from "../../ingest/uploadManualPdf.js";
 import { affectedOilPicUpload, saveAffectedOilPic, listAffectedOilPics } from "../../images/affectedOilPics.js";
+import { renderAndPublishFlowChart } from "../../images/flowChartPics.js";
 
 export const adminRouter = Router();
 
@@ -64,6 +65,56 @@ adminRouter.post("/upload", (req, res, next) => {
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
+});
+
+// ---------- 下游流向圖（PDF 逐頁轉圖，直接發布，不 staging）----------
+
+adminRouter.post("/flow-chart", (req, res, next) => {
+  upload.single("file")(req, res, (err) => {
+    if (err) {
+      return res.status(400).json({ error: err.message });
+    }
+    next();
+  });
+}, async (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ error: "缺少上傳檔案 (file)" });
+  }
+  try {
+    const result = await renderAndPublishFlowChart({
+      buffer: req.file.buffer,
+      originalName: req.file.originalname,
+    });
+    res.status(201).json(result);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// ---------- 回收統計（流向圖黃框數字，人工輸入，整批覆蓋發布）----------
+
+adminRouter.post("/publish/recall-stats", async (req, res) => {
+  const { stats } = req.body;
+  if (!Array.isArray(stats)) {
+    return res.status(400).json({ error: "缺少 stats 陣列" });
+  }
+  for (const [i, stat] of stats.entries()) {
+    if (!stat.incident || !stat.asOf || !Number.isFinite(Number(stat.recalledTonnage))) {
+      return res.status(400).json({ error: `第 ${i + 1} 筆缺少 事件名稱、截至時間或回收噸數` });
+    }
+  }
+
+  await prisma.$transaction([
+    prisma.recallStat.deleteMany(),
+    prisma.recallStat.createMany({
+      data: stats.map((r) => ({
+        incident: r.incident,
+        asOf: r.asOf,
+        recalledTonnage: Number(r.recalledTonnage),
+      })),
+    }),
+  ]);
+  res.json({ published: stats.length });
 });
 
 // ---------- 下游業者清單 ----------

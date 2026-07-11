@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { App, Button, DatePicker, Flex, Form, Input, Spin, Typography } from 'antd'
+import { App, AutoComplete, Button, DatePicker, Flex, Form, Input, Spin, Typography } from 'antd'
 import { MinusCircleOutlined, PlusOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
 
@@ -7,6 +7,21 @@ import Header from '../../component/Header'
 import { fetchPublishedAffectedOils, publishAffectedOils } from '../../api/admin'
 import PicField from './PicField'
 import ConfirmPublishModal from './ConfirmPublishModal'
+
+// 這次事件涉及的三家油廠，下拉直接帶出；欄位仍可自由輸入其他品牌
+const BRAND_OPTIONS = [
+  { value: '福壽實業股份有限公司' },
+  { value: '福懋油脂股份有限公司' },
+  { value: '泰山企業股份有限公司' },
+]
+
+// 品牌欄位：下拉帶三家公司、也能自由輸入。antd v6 淘汰了 AutoComplete 的
+// filterOption，所以用目前輸入值自己過濾選項（value/onChange 由 Form.Item 注入）
+function BrandAutoComplete(props) {
+  const keyword = props.value?.trim() ?? ''
+  const options = BRAND_OPTIONS.filter((o) => keyword === '' || o.value.includes(keyword))
+  return <AutoComplete {...props} options={options} placeholder="品牌（選填）" allowClear />
+}
 
 const DATE_FORMAT = 'YYYY.MM.DD'
 // 資料都落在 2027–2028 年，日曆打開直接跳到 2027 年開始選
@@ -91,8 +106,8 @@ export default function AffectedOilsPage() {
                       <Form.Item name={[name, 'productPicPath']} style={{ marginBottom: 8 }}>
                         <PicField />
                       </Form.Item>
-                      <Form.Item name={[name, 'brand']} style={{ marginBottom: 8, width: 130 }}>
-                        <Input placeholder="品牌（選填）" />
+                      <Form.Item name={[name, 'brand']} style={{ marginBottom: 8, width: 200 }}>
+                        <BrandAutoComplete />
                       </Form.Item>
                       <Form.Item
                         name={[name, 'productName']}

@@ -6,7 +6,7 @@ export default function Header() {
         <header>
             <div
              onClick={() => navigate('/')} style={{ cursor: "pointer", fontSize: "1rem"}}>
-                油品資訊管理後台
+                中聯油品案資訊專區
             </div>
             <div>
                 <ul>

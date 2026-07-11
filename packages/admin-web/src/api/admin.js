@@ -95,6 +95,48 @@ export async function publishAffectedOils(oils) {
 }
 
 /**
+ * POST /api/admin/flow-chart
+ * 上傳「下游流向圖」PDF；後端逐頁轉 PNG 後直接發布（不經 staging）。
+ * @param {File} file PDF 檔
+ * @returns {Promise<{pageCount: number, pages: {filename: string, path: string, page: number}[]}>}
+ */
+export async function uploadFlowChartPdf(file) {
+  const formData = new FormData()
+  formData.append('file', file)
+  return requestJson(`${BASE}/flow-chart`, { method: 'POST', body: formData })
+}
+
+/**
+ * GET /api/public/flow-chart
+ * @returns {Promise<{updatedAt: string|null, pages: {filename: string, path: string, page: number}[]}>}
+ */
+export async function fetchFlowChart() {
+  return requestJson('/api/public/flow-chart')
+}
+
+/**
+ * GET /api/public/recall-stats
+ * @returns {Promise<{id: number, incident: string, asOf: string, recalledTonnage: number}[]>}
+ */
+export async function fetchRecallStats() {
+  return requestJson('/api/public/recall-stats')
+}
+
+/**
+ * POST /api/admin/publish/recall-stats
+ * 整批覆蓋發布回收統計。
+ * @param {object[]} stats { incident, asOf, recalledTonnage }
+ * @returns {Promise<{published: number}>}
+ */
+export async function publishRecallStats(stats) {
+  return requestJson(`${BASE}/publish/recall-stats`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ stats }),
+  })
+}
+
+/**
  * PATCH edit note
  * @param {number} id staging 列 id
  * @param {string} reviewedNote 管理員補充的備註

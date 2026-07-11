@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { prisma } from "../../lib/prisma.js";
+import { listFlowChartPics } from "../../images/flowChartPics.js";
 
 export const publicRouter = Router();
 
@@ -20,4 +21,19 @@ publicRouter.get("/recall-products", async (_req, res) => {
 publicRouter.get("/affected-oils", async (_req, res) => {
   const rows = await prisma.affectedOil.findMany({ orderBy: { id: "asc" } });
   res.json(rows);
+});
+
+// 回收統計（流向圖黃框數字）：每個事件一列，人工輸入
+publicRouter.get("/recall-stats", async (_req, res) => {
+  const rows = await prisma.recallStat.findMany({ orderBy: { id: "asc" } });
+  res.json(rows);
+});
+
+// 下游流向圖：目前版本的逐頁圖網址 + 最近一次更新資訊
+publicRouter.get("/flow-chart", async (_req, res) => {
+  const latest = await prisma.flowChartUpdate.findFirst({ orderBy: { id: "desc" } });
+  res.json({
+    updatedAt: latest?.publishedAt ?? null,
+    pages: await listFlowChartPics(),
+  });
 });

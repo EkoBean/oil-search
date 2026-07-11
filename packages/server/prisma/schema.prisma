@@ -82,6 +82,24 @@ model RecallProduct {
   @@index([productName])
 }
 
+// ---------- 下游流向圖（PDF 逐頁轉圖直接發布，不解析、不 staging） ----------
+// 每次上傳新版 PDF 就插一列，公開端取最新一列當「目前版本」的更新時間依據。
+model FlowChartUpdate {
+  id           Int      @id @default(autoincrement())
+  originalName String? // 上傳時的檔名，僅供後台辨識
+  pageCount    Int // 轉出的頁圖張數
+  publishedAt  DateTime @default(now())
+}
+
+// ---------- 回收統計（流向圖黃框數字，純人工輸入，整批覆蓋發布） ----------
+model RecallStat {
+  id              Int      @id @default(autoincrement())
+  incident        String // 事件名稱，例如「中聯油脂 油槽315」
+  asOf            String // FDA 揭露的統計截至時間，照原文輸入，例如「07/11 11 AM」
+  recalledTonnage Float // 已下架回收噸數
+  publishedAt     DateTime @default(now())
+}
+
 // ---------- 受影響油品資訊（圖配文 PDF，純人工輸入） ----------
 model AffectedOil {
   id          Int      @id @default(autoincrement())

@@ -16,7 +16,7 @@ function App() {
       <AntdApp>
         <Router>
           <Routes>
-            <Route path="/" element={<UploadPage />} />
+            <Route path="/" element={<Home />} />
             <Route path="/upload" element={<UploadPage />} />
             <Route path="/staging" element={<StagingPage />} />
             <Route path="/affected-oils" element={<AffectedOilsPage />} />

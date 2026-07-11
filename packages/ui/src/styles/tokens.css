@@ -1,11 +1,11 @@
 /* 全站共用的設計變數。前後台如需不同配色，在各自 app 的 index.css 覆寫同名變數即可 */
 :root {
   --text: #6b6375;
-  --text-h: #08060d;
+  --text-h: #0b0e24;
   --bg: #fff;
   --border: #e5e4e7;
   --code-bg: #f4f3ec;
-  --accent: #484957;
+  --accent: #f1cb1e;
   --accent-bg: rgba(67, 66, 73, 0.164);
   --accent-border: rgba(19, 19, 19, 0.5);
   --social-bg: rgba(19, 19, 19, 0.5);
