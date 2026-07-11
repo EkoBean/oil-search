@@ -26,7 +26,7 @@ const UPLOAD_SECTIONS = [
     key: 'flow_chart',
     title: '下游流向圖 PDF 上傳',
     description: '上傳「下游流向圖」PDF，系統會將每頁轉成圖片並直接發布到公開站（不經審核）。回收統計數字請另外到首頁管理更新。',
-    fdaUrl: 'https://www.fda.gov.tw/tc/siteList.aspx?sid=13708',
+    fdaUrl: 'https://www.fda.gov.tw/tc/site.aspx?sid=13707&r=1865165911',
     upload: (file) => uploadFlowChartPdf(file),
     successMessage: (file, result) => `「${file.name}」已轉出 ${result.pageCount} 頁圖片並發布`,
   },

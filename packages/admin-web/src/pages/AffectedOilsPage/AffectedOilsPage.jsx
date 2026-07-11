@@ -89,7 +89,10 @@ export default function AffectedOilsPage() {
     <>
       <Header />
       <Flex vertical gap="large" className="page-body" style={{ padding: '24px 28px 48px', textAlign: 'left' }}>
-        <Typography.Title level={2} style={{ margin: 0 }}>受影響油品編輯</Typography.Title>
+        <Flex justify="space-between" align="baseline" gap="middle" wrap>
+          <Typography.Title level={2} style={{ margin: 0 }}>受影響油品編輯</Typography.Title>
+          <a href="https://www.fda.gov.tw/tc/siteList.aspx?sid=13708" target="_blank" rel="noreferrer">FDA 佈告欄</a>
+        </Flex>
         <Typography.Text type="secondary">
           此清單不經過審核流程，按下發佈後會直接覆蓋公開站上的整份受影響油品資料。
         </Typography.Text>
