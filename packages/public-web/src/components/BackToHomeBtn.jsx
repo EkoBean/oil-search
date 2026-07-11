@@ -12,14 +12,20 @@ export default function BackToHomeBtn() {
         className="back-to-home-btn"
         onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
       >
-        回頂端
+        <img src="/images/Up.png" alt="" />
+        <p>
+          回頂端
+        </p>
       </button>
     );
   }
 
   return (
     <Link to="/" className="back-to-home-btn">
-      回首頁
+      <img src="/images/Home Page.png" alt="" />
+      <p>
+        回首頁
+      </p>
     </Link>
   );
 }

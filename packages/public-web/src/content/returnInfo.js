@@ -1,6 +1,3 @@
-// 退貨資訊，逐字轉錄自食藥署「退貨資訊」手板（製圖日期 115.7.6，
-// 原圖存於 public/images/fda-return-info-0707.jpg，頁面上也會展示）。
-// FDA 更新手板時，記得同步這份資料和 public/images 的原圖。
 export const RETURN_INFO = [
   {
     company: "泰山企業股份有限公司",
@@ -31,4 +28,4 @@ export const RETURN_INFO = [
 ];
 
 export const RETURN_INFO_NOTE =
-  "退貨條件及作業方式依各公司／通路規定辦理，若有疑問請洽各公司／通路客服；後續賠償由廠商全權負責。";
+  "退貨條件及作業方式依各公司/通路規定辦理，若有疑問請洽各公司/通路客服，後續賠償由廠商全權負責。";

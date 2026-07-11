@@ -22,7 +22,6 @@ main a:hover {
   color: var(--accent);
 }
 
-/* Header 導覽是 NavLink（<a>），沿用 header 的文字色 */
 header a {
   color: inherit;
   text-decoration: none;
@@ -99,6 +98,7 @@ header ul {
   text-decoration: none !important;
   transition: box-shadow 0.15s, border-color 0.15s;
   text-align: center;
+  box-shadow: var(--shadow);
 }
 
 .entry-card:hover {
@@ -127,6 +127,7 @@ header ul {
 @media (max-width: 640px) {
   .entry-card {
     text-align: left;
+    background-color: var(--accent);
   }
 
   .entry-card h2 {
@@ -165,7 +166,9 @@ header ul {
 :root {
   interpolate-size: allow-keywords;
 }
+
 @media (prefers-reduced-motion: no-preference) {
+
   .collapse::details-content,
   .return-original::details-content {
     opacity: 0;
@@ -176,6 +179,7 @@ header ul {
       opacity 0.2s ease,
       block-size 0.2s ease;
   }
+
   .collapse[open]::details-content,
   .return-original[open]::details-content {
     opacity: 1;
@@ -304,12 +308,17 @@ header ul {
   margin: 8px 0;
 }
 
-/* 整列都是可點的外連區域 */
 .news-item a {
-  display: block;
+  display: flex;
   padding: 12px 16px;
   color: var(--text);
   text-decoration: none;
+}
+
+@media(max-width: 640px){
+  .news-item a{
+    flex-direction: column;
+  }
 }
 
 .news-date {
@@ -317,6 +326,7 @@ header ul {
   font-size: 14px;
   color: var(--text);
   margin-right: 10px;
+  align-self: center;
 }
 
 .news-more {
@@ -477,9 +487,9 @@ footer a {
   position: fixed;
   right: max(16px, env(safe-area-inset-right));
   bottom: max(16px, env(safe-area-inset-bottom));
-  z-index: 90; /* 低於 sticky header 的 100 */
-  width: 64px;
-  height: 64px;
+  z-index: 90;
+  width: 68px;
+  height: 68px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -490,4 +500,26 @@ footer a {
   font-size: 15px;
   font-weight: 600;
   box-shadow: var(--shadow);
+  flex-direction: column;
+  gap: 2px;
+  transition: 0.2s;
+}
+
+.back-to-home-btn img {
+  width: 40%;
+  height: auto;
+}
+
+.back-to-home-btn p {
+  max-height: 0;
+  overflow: hidden;
+  transition: 0.3s;
+  color: var(--text)
+}
+
+.back-to-home-btn:hover {
+  background-color: var(--text-h)
+}
+.back-to-home-btn:hover p{
+  max-height: 32px;
 }

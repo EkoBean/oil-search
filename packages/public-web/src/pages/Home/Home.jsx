@@ -20,7 +20,7 @@ function RecallHero() {
       <p className="hero-label">已下架回收</p>
       {recallStats.map((r) => (
         <p key={r.id} className="hero-asof">
-          {r.incident}｜統計截至 {r.asOf}（食藥署公布）
+          {r.incident}回收 {r.recalledTonnage} 噸｜統計截至 {r.asOf}
         </p>
       ))}
     </section>
@@ -127,7 +127,6 @@ function ReturnInfoTable() {
   );
 }
 
-// GET api/public/news
 function NewsSection() {
   const { news, loading, failed } = useData();
   if (!loading && (failed.includes("news") || news.length === 0)) {
@@ -141,7 +140,7 @@ function NewsSection() {
         {news.slice(0, 3).map((item) => (
           <li key={item.url} className="news-item">
             <a href={item.url} target="_blank" rel="noopener noreferrer">
-              <span className="news-date">{item.date}</span>
+              <div className="news-date">{item.date}</div>
               {item.title}
             </a>
           </li>

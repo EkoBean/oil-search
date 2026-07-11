@@ -10,6 +10,7 @@ import AffectedOilsPage from './pages/AffectedOilsPage.jsx'
 import RecallProductsPage from './pages/RecallProductsPage.jsx'
 import DownstreamVendorsPage from './pages/DownstreamVendorsPage.jsx'
 
+
 import './App.css'
 
 // SPA 換頁不會自動回頂端，查詢頁捲到很下面再回首頁會停在半空中。

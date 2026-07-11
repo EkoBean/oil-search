@@ -11,7 +11,7 @@ export default function Header() {
     return (
         <header>
             <div
-             onClick={() => navigate('/')} style={{ cursor: "pointer", fontSize: "1rem"}}>
+             onClick={() => navigate('/')} style={{ cursor: "pointer", fontSize: "1.3rem"}}>
                 中聯油品案回收網
             </div>
             <div>

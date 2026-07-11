@@ -56,7 +56,7 @@ code {
   font-family: var(--mono);
   display: inline-flex;
   border-radius: 4px;
-  color: var(--text-h);
+  color: var(--text);
   font-size: 15px;
   line-height: 135%;
   padding: 4px 8px;
@@ -66,8 +66,7 @@ code {
 header {
   background: var(--accent);
   color: #fff;
-  padding: 0 28px;
-  height: 60px;
+  padding: 1rem 28px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -95,5 +94,11 @@ header {
     li:hover{
       color:var(--text-h)
     }
+  }
+}
+
+@media(max-width: 640px){
+  header{
+    flex-direction: column;
   }
 }

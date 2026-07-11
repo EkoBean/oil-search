@@ -30,7 +30,7 @@ export default function AffectedOilsPage() {
           type="search"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="輸入品牌、品名或批號，例如：好理"
+          placeholder="輸入品牌、品名或批號，例如：沙拉油"
           aria-label="搜尋受影響油品"
         />
         <span className="result-count">
