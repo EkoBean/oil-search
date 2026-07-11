@@ -1,0 +1,475 @@
+#root {
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+}
+
+main {
+  width: min(1100px, 100% - 32px);
+  margin-inline: auto;
+  padding: 8px 0 64px;
+  flex: 1;
+}
+
+main a {
+  color: var(--text-h);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  transition: 0.1s;
+}
+
+main a:hover {
+  color: var(--accent);
+}
+
+/* Header 導覽是 NavLink（<a>），沿用 header 的文字色 */
+header a {
+  color: inherit;
+  text-decoration: none;
+}
+
+header a.active {
+  color: var(--text);
+  text-shadow: none;
+  font-weight: 600;
+}
+
+header ul {
+  margin: 0;
+  padding: 0;
+}
+
+/* ---------- 首頁 Hero ---------- */
+.hero {
+  text-align: center;
+  padding: 40px 0 8px;
+}
+
+.hero-eyebrow {
+  color: var(--text);
+  font-weight: 600;
+  letter-spacing: 1px;
+}
+
+.hero-number {
+  font-size: 72px;
+  line-height: 1.1;
+  font-weight: 650;
+  color: var(--text-h);
+  font-variant-numeric: tabular-nums;
+  margin-top: 8px;
+}
+
+.hero-unit {
+  font-size: 24px;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.hero-label {
+  font-size: 20px;
+  color: var(--text);
+}
+
+.hero-asof {
+  font-size: 14px;
+  margin-top: 10px;
+}
+
+@media (max-width: 640px) {
+  .hero-number {
+    font-size: 48px;
+  }
+}
+
+/* ---------- 查詢入口卡 ---------- */
+.entry-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+  margin: 32px 0;
+}
+
+.entry-card {
+  display: block;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  background: var(--code-bg);
+  text-decoration: none !important;
+  transition: box-shadow 0.15s, border-color 0.15s;
+  text-align: center;
+}
+
+.entry-card:hover {
+  box-shadow: var(--shadow);
+  border-color: var(--accent-border);
+  background-color: var(--accent);
+}
+
+.entry-card h2 {
+  margin: 0 0 6px;
+  padding-top: 2rem;
+  padding-bottom: 2rem;
+}
+
+.entry-card-sub {
+  color: var(--text);
+}
+
+.entry-card-meta {
+  margin-top: 12px;
+  font-size: 14px;
+  font-family: var(--mono);
+  color: var(--text);
+}
+
+@media (max-width: 640px) {
+  .entry-card {
+    text-align: left;
+  }
+
+  .entry-card h2 {
+    padding-top: 0.8rem;
+    padding-bottom: 0.8rem;
+  }
+}
+
+
+/* ---------- 收合區塊 ---------- */
+.collapse {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  margin: 16px 0;
+  background-color: var(--code-bg);
+  transition: 0.3s;
+}
+
+.collapse>summary {
+  cursor: pointer;
+  padding: 16px 20px;
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text);
+  user-select: none;
+
+}
+
+.collapse-body {
+  padding: 0 20px 20px;
+}
+
+/* <details> 展開／收合動畫（0.2s）。interpolate-size 讓高度能從 0 過渡到 auto，
+   搭配 ::details-content 偽元素；不支援的瀏覽器沒有動畫但開合照常。
+   content-visibility 要用 allow-discrete 延到動畫結束才切換，收合才看得到過程 */
+:root {
+  interpolate-size: allow-keywords;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .collapse::details-content,
+  .return-original::details-content {
+    opacity: 0;
+    block-size: 0;
+    overflow-y: clip;
+    transition:
+      content-visibility 0.2s allow-discrete,
+      opacity 0.2s ease,
+      block-size 0.2s ease;
+  }
+  .collapse[open]::details-content,
+  .return-original[open]::details-content {
+    opacity: 1;
+    block-size: auto;
+  }
+}
+
+/* FAQ（發生什麼事了？） */
+.faq-item {
+  border-top: 1px solid var(--border);
+  padding: 14px 1.5rem 4px;
+}
+
+.faq-item:first-child {
+  border-top: none;
+  padding-top: 0;
+}
+
+.faq-item h3 {
+  margin: 0 0 8px;
+  font-size: 18px;
+  color: var(--accent);
+}
+
+.faq-item p {
+  margin: 8px 0;
+}
+
+.faq-item b {
+  color: var(--text);
+}
+
+.timeline {
+  margin: 8px 0;
+  padding-left: 1.4em;
+}
+
+.timeline li {
+  margin: 4px 0;
+}
+
+.faq-source {
+  font-size: 14px;
+}
+
+/* 退貨資訊 */
+.return-table-wrap {
+  overflow-x: auto;
+}
+
+.return-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.return-table th,
+.return-table td {
+  border-bottom: 1px solid var(--border);
+  padding: 12px;
+  text-align: left;
+  vertical-align: center;
+}
+
+.return-table th {
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.return-phone {
+  font-family: var(--mono);
+  font-size: 20px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.return-hours {
+  display: block;
+  font-size: 13px;
+}
+
+.return-note {
+  font-size: 14px;
+  margin-top: 10px;
+}
+
+.return-original {
+  margin-top: 14px;
+}
+
+.return-original summary {
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.return-original img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin-top: 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+/* ---------- 食藥署最新公告 ---------- */
+.news {
+  margin: 32px 0;
+  background-color: var(--code-bg);
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.news h2 {
+  margin-bottom: 1rem;
+}
+
+.news-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.news-item {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin: 8px 0;
+}
+
+/* 整列都是可點的外連區域 */
+.news-item a {
+  display: block;
+  padding: 12px 16px;
+  color: var(--text);
+  text-decoration: none;
+}
+
+.news-date {
+  font-family: var(--mono);
+  font-size: 14px;
+  color: var(--text);
+  margin-right: 10px;
+}
+
+.news-more {
+  margin-top: 10px;
+  font-size: 15px;
+}
+
+/* ---------- 下游流向圖 ---------- */
+.flow-chart {
+  margin: 32px 0;
+}
+
+.flow-chart img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 12px auto;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+/* ---------- 查詢頁 ---------- */
+.page-desc {
+  margin: 0 0 8px;
+}
+
+.page-desc b {
+  color: var(--text);
+}
+
+.source-note {
+  font-size: 14px;
+  margin: 0 0 24px;
+}
+
+.filter-bar {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.filter-bar input[type='search'],
+.filter-bar select {
+  padding: 10px 14px;
+  font-size: 16px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text-h);
+}
+
+.filter-bar input[type='search'] {
+  flex: 1;
+  min-width: 220px;
+}
+
+.result-count {
+  font-size: 14px;
+  font-family: var(--mono);
+  white-space: nowrap;
+}
+
+.empty-hint {
+  padding: 24px;
+  text-align: center;
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+}
+
+/* 受影響油品卡片 */
+.oil-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.oil-card {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.oil-card img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: contain;
+  background: #fff;
+  /* 產品去背照固定白底，暗色模式下也看得清楚 */
+}
+
+.oil-card-nopic {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--code-bg);
+  font-size: 14px;
+}
+
+.oil-card-body {
+  padding: 12px 14px 14px;
+}
+
+.oil-card-brand {
+  font-size: 13px;
+}
+
+.oil-card h3 {
+  margin: 2px 0 8px;
+  font-size: 17px;
+  color: var(--text);
+}
+
+.oil-card-expiry {
+  font-size: 14px;
+  margin-top: 6px;
+}
+
+/* ---------- Footer ---------- */
+footer {
+  border-top: 1px solid var(--border);
+  background-color: var(--code-bg);
+  margin-top: 32px;
+  padding: 24px 28px 40px;
+  font-size: 14px;
+  text-align: center;
+}
+
+footer a {
+  color: var(--text-h);
+}
+
+.footer-disclaimer {
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+.footer-links {
+  list-style: none;
+  margin: 14px 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 24px;
+  justify-content: center;
+}
+
+/* ---------- 回首頁泡泡 ---------- */
+.back-to-home-btn{
+  display: fixed;
+  background-color: var(--accent);
+  border-radius: 50%;
+}

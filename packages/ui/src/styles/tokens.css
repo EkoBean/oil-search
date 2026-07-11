@@ -1,11 +1,11 @@
 /* 全站共用的設計變數。前後台如需不同配色，在各自 app 的 index.css 覆寫同名變數即可 */
 :root {
-  --text: #6b6375;
-  --text-h: #0b0e24;
+  --text: #252527;
+  --text-h: #6c7bac;
   --bg: #fff;
   --border: #e5e4e7;
   --code-bg: #f4f3ec;
-  --accent: #f1cb1e;
+  --accent: #eec40a;
   --accent-bg: rgba(67, 66, 73, 0.164);
   --accent-border: rgba(19, 19, 19, 0.5);
   --social-bg: rgba(19, 19, 19, 0.5);
@@ -24,9 +24,9 @@
     --bg: #16171d;
     --border: #2e303a;
     --code-bg: #1f2028;
-    --accent: #c084fc;
+    --accent: #f1cb1e;
     --accent-bg: rgba(192, 132, 252, 0.15);
-    --accent-border: rgba(192, 132, 252, 0.5);
+    --accent-border: rgba(255, 255, 255, 0.699);
     --social-bg: rgba(47, 48, 58, 0.5);
     --shadow:
       rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;

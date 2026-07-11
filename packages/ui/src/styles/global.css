@@ -23,7 +23,7 @@ h1,
 h2 {
   font-family: var(--heading);
   font-weight: 500;
-  color: var(--text-h);
+  color: var(--text);
 }
 
 h1 {
@@ -79,6 +79,8 @@ header {
   position: sticky;
   top:0;
   z-index:100;
+
+  text-shadow: 1px 1px 1px rgba(15, 12, 46, 0.952) ;
 
   ul {
     
