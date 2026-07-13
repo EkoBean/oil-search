@@ -17,7 +17,7 @@ export default function Footer() {
                 </a>
             </p>
             <p>
-                本站為個人自費維運（伺服器與工具費用），如果這些資訊對你有幫助，<a href="https://ko-fi.com/babuluckyoctober#">歡迎請我喝杯咖啡 <img className="footer-icon" src="/images/Kofi.png" /></a>
+                本站為個人自費維運，如果這些資訊對你有幫助，<a target="_blank" href="https://ko-fi.com/babuluckyoctober#">歡迎請我喝杯咖啡 <img className="footer-icon" src="/images/Kofi.png" /></a>
             </p>
         </footer>
     )
