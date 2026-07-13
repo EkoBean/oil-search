@@ -20,6 +20,7 @@
 """
 import argparse
 import csv
+import os
 import pdfplumber
 
 HEADER_1 = ["序號", "縣市", "業者", "品項", "批號", "有效日期"]
@@ -132,6 +133,7 @@ def clean_recall_list(rows):
 
 
 def write_csv(path, fieldnames, records):
+    os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, "w", newline="", encoding="utf-8-sig") as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()
