@@ -1,4 +1,8 @@
-const BASE = '/api/admin'
+// 生產環境 server 跑在不同網域，build 時用 VITE_API_BASE 指定（例如 https://xxx.up.railway.app）；
+// 沒設就用相對路徑，本機開發時走 vite.config.js 的 proxy
+const API_BASE = import.meta.env.VITE_API_BASE ?? ''
+const BASE = `${API_BASE}/api/admin`
+const PUBLIC_BASE = `${API_BASE}/api/public`
 
 // docType -> 後端 route 片段（staging/publish 共用同一組命名）
 const DOC_TYPE_PATHS = {
@@ -59,7 +63,7 @@ export async function publishStaging(docType) {
  * @returns {Promise<object[]>}
  */
 export async function fetchPublishedAffectedOils() {
-  return requestJson('/api/public/affected-oils')
+  return requestJson(`${PUBLIC_BASE}/affected-oils`)
 }
 
 /**
@@ -111,7 +115,7 @@ export async function uploadFlowChartPdf(file) {
  * @returns {Promise<{updatedAt: string|null, pages: {filename: string, path: string, page: number}[]}>}
  */
 export async function fetchFlowChart() {
-  return requestJson('/api/public/flow-chart')
+  return requestJson(`${PUBLIC_BASE}/flow-chart`)
 }
 
 /**
@@ -119,7 +123,7 @@ export async function fetchFlowChart() {
  * @returns {Promise<{id: number, incident: string, asOf: string, recalledTonnage: number}[]>}
  */
 export async function fetchRecallStats() {
-  return requestJson('/api/public/recall-stats')
+  return requestJson(`${PUBLIC_BASE}/recall-stats`)
 }
 
 /**

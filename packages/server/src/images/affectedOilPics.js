@@ -4,7 +4,10 @@ import path from "node:path";
 import multer from "multer";
 import { AFFECTED_OIL_PICS_ROOT } from "../lib/paths.js";
 
-const URL_PREFIX = "/media/affected-oils";
+// PUBLIC_ORIGIN：server 對外的完整網址（例如 https://xxx.up.railway.app）。
+// 前端跟 server 部署在不同網域時，/media/... 相對路徑會被解析成前端自己的網域，
+// 所以圖片路徑要挾帶完整 origin；本機開發沒設就維持相對路徑（走 vite proxy）。
+const URL_PREFIX = `${process.env.PUBLIC_ORIGIN ?? ""}/media/affected-oils`;
 
 // multer middleware
 export const affectedOilPicUpload = multer({

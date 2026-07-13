@@ -11,7 +11,8 @@ RUN pip3 install --break-system-packages --no-cache-dir -r packages/extract-pdfs
 
 COPY packages/server/package.json ./packages/server/package.json
 WORKDIR /app/packages/server
-RUN npm install --omit=dev
+# prisma CLI（devDependency）留著，因為 CMD 在啟動時要跑 `prisma migrate deploy`
+RUN npm install
 
 WORKDIR /app
 COPY packages/extract-pdfs ./packages/extract-pdfs
@@ -21,4 +22,4 @@ WORKDIR /app/packages/server
 RUN npx prisma generate
 
 EXPOSE 3000
-CMD ["node", "src/index.js"]
+CMD npx prisma migrate deploy && node src/index.js

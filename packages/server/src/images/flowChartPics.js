@@ -8,7 +8,8 @@ import { ARCHIVE_ROOT, FLOW_CHART_PICS_ROOT, REPO_ROOT, RENDER_SCRIPT_PATH } fro
 const execFileAsync = promisify(execFile);
 
 const PYTHON_BIN = process.env.PYTHON_BIN ?? "python";
-const URL_PREFIX = "/media/flow-chart";
+// 同 affectedOilPics.js：跨網域部署時圖片路徑要挾帶 server 的完整 origin
+const URL_PREFIX = `${process.env.PUBLIC_ORIGIN ?? ""}/media/flow-chart`;
 
 // 頁圖檔名固定為 <上傳時間戳>-page-<頁碼>.png；時間戳讓每個版本的網址都不同，
 // 換版時瀏覽器不會拿到快取的舊圖。
