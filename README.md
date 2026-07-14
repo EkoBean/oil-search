@@ -20,25 +20,28 @@
 
 ## 系統架構
 
-```
-食藥署網站（多個來源頁面）
-      │  每小時輪詢，比對 PDF 連結的 fileId 判斷是否改版
-      ▼
-┌──────────────────────┐
-│   Node.js Server      │──有更新──▶ 下載 PDF ──▶ spawn python extract_pdfs.py
-│   (Express + cron)    │                                   │
-│                       │◀──────────── 產生清洗後 CSV ───────┘
-└──────────┬───────────┘
-           │ 匯入 staging_* 資料表 ──▶ Discord webhook 通知管理員
-           ▼
-   ┌────────────────┐        管理員後台（React）
-   │ Staging Tables │◀────── 人工核對／補備註／手動輸入受影響油品
-   └───────┬────────┘
-           │ 核准 publish（整批覆蓋）
-           ▼
-   ┌────────────────┐        民眾查詢前台（React）
-   │Published Tables│──────▶ 全表撈取、前端過濾查詢
-   └────────────────┘
+```mermaid
+flowchart TD
+    FDA["食藥署網站<br/>多個來源頁面"]
+    PY["spawn python<br/>extract_pdfs.py"]
+    STAGING[("Staging Tables")]
+    PUBLISHED[("Published Tables")]
+    ADMIN["管理員後台 React<br/>人工核對／補備註／手動輸入受影響油品"]
+    PUBLIC["民眾查詢前台 React<br/>全表撈取、前端過濾查詢"]
+
+    subgraph SERVER["Node.js Server（Express + cron）"]
+        direction TB
+        S1["每小時輪詢<br/>比對 PDF 連結 fileId 判斷是否改版"]
+    end
+
+    FDA -->|"每小時輪詢"| SERVER
+    SERVER -->|"有更新，下載 PDF"| PY
+    PY -->|"產生清洗後 CSV"| SERVER
+    SERVER -->|"匯入 staging_* 資料表"| STAGING
+    SERVER -.->|"Discord webhook 通知管理員"| ADMIN
+    ADMIN -->|"人工核對／補資料"| STAGING
+    STAGING -->|"核准 publish（整批覆蓋）"| PUBLISHED
+    PUBLISHED -->|"讀取"| PUBLIC
 ```
 
 兩條進料路徑匯流到同一套 staging/審核/發布邏輯（`ingest/extractAndStage.js`）：
