@@ -36,8 +36,10 @@ export default function DownstreamVendorsPage() {
     <>
       <h1>下游業者清單</h1>
       <p className="page-desc">
-        曾向上游進貨受影響油品的業者（整理自食藥署公告）。列於此表代表其<b>曾進貨並配合下架回收</b>，
-        不代表其違規或其產品檢驗超標。
+        由食藥署及三家廠商(泰山、福懋、福壽)揭露之表單。
+        <br/>
+        <a href="https://www.fda.gov.tw/tc/siteContent.aspx?sid=13722" target="_blank" > 來源公告(業者自行揭露) </a>
+        <a href="https://www.fda.gov.tw/tc/siteList.aspx?sid=13708" > 來源公告(食藥署揭露) </a>
       </p>
       <SourceNote updatedAt={latestPublishedAt(downstreamVendors)} sourceUrl={FDA_LINKS.downstreamAndOils} />
 
