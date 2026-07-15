@@ -11,6 +11,9 @@ const PYTHON_BIN = process.env.PYTHON_BIN ?? "python";
 const OUTPUT_FILENAMES = {
   downstream_vendors: "下游業者清單.csv",
   recall_products: "預防性下架產品清單.csv",
+  fushou_downstream: "福壽自行揭露下游業者清單.csv",
+  fumao_downstream: "福懋自行揭露下游業者清單.csv",
+  taishan_downstream: "泰山自行揭露下游業者清單.csv",
 };
 
 export async function runExtractPdfs({ docType, inputPath }) {

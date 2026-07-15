@@ -4,7 +4,13 @@ import { prisma } from "../lib/prisma.js";
 import { ARCHIVE_ROOT } from "../lib/paths.js";
 import { extractAndStage } from "./extractAndStage.js";
 
-const SUPPORTED_DOC_TYPES = new Set(["downstream_vendors", "recall_products"]);
+const SUPPORTED_DOC_TYPES = new Set([
+  "downstream_vendors",
+  "recall_products",
+  "fushou_downstream",
+  "fumao_downstream",
+  "taishan_downstream",
+]);
 
 /**
  * 手動上傳流程的入口：admin 上傳 PDF + 選 docType，存檔、建立 SourceDocument，

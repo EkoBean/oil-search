@@ -12,7 +12,7 @@ datasource db {
 // 每小時輪詢只解析 HTML 列表頁拿這個連結字串比對，連結沒變就不下載 PDF。
 model SourceDocument {
   id           Int      @id @default(autoincrement())
-  docType      String // downstream_vendors | recall_products | affected_oils
+  docType      String // downstream_vendors | recall_products | affected_oils | fushou_downstream | fumao_downstream | taishan_downstream
   sourceUrl    String // FDA 列表頁網址
   downloadUrl  String // 解析出的 PDF 下載連結（GetFile.ashx?...）
   fileId       String // 從 downloadUrl 解析出的 id 參數，版本判斷用

@@ -9,12 +9,29 @@ async function readCsv(fileName) {
   return parse(raw, { columns: true, skip_empty_lines: true, bom: true });
 }
 
-// 每次重新解析都是「這個 docType 目前待審核的最新一份」，先清掉舊的 staging 列，
-// 避免同一份 CSV 重跑（或同一 docType 再次上傳新 PDF）時，舊資料跟新資料疊在一起。
-export async function loadDownstreamVendorsStaging(sourceDocId) {
-  const rows = await readCsv("下游業者清單.csv");
+// downstream_vendors 及三家廠商自行揭露的清單 (fushou/fumao/taishan_downstream) 欄位相同，
+// 共用同一張 StagingDownstreamVendor 表跟後台審核/發布流程；只是各自的 CSV 檔名不同。
+const DOWNSTREAM_LIKE_CSV_FILENAMES = {
+  downstream_vendors: "下游業者清單.csv",
+  fushou_downstream: "福壽自行揭露下游業者清單.csv",
+  fumao_downstream: "福懋自行揭露下游業者清單.csv",
+  taishan_downstream: "泰山自行揭露下游業者清單.csv",
+};
+
+// 每次重新解析都是「這個來源目前待審核的最新一份」，先清掉同一 docType 的舊 staging 列
+// (只清同一來源，不動其他來源的 staging 資料——四種來源共用同一張表，各自審核、各自發布)，
+// 避免同一 docType 的 CSV 重跑（或再次上傳新 PDF）時，舊資料跟新資料疊在一起。
+export async function loadDownstreamVendorsStaging(sourceDocId, docType = "downstream_vendors") {
+  const fileName = DOWNSTREAM_LIKE_CSV_FILENAMES[docType];
+  const rows = await readCsv(fileName);
+  const priorSourceDocIds = await prisma.sourceDocument.findMany({
+    where: { docType },
+    select: { id: true },
+  });
   await prisma.$transaction([
-    prisma.stagingDownstreamVendor.deleteMany(),
+    prisma.stagingDownstreamVendor.deleteMany({
+      where: { sourceDocId: { in: priorSourceDocIds.map((d) => d.id) } },
+    }),
     prisma.stagingDownstreamVendor.createMany({
       data: rows.map((r) => ({
         sourceDocId,

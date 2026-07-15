@@ -4,8 +4,11 @@ import { loadDownstreamVendorsStaging, loadRecallProductsStaging } from "./loadS
 import { prisma } from "../lib/prisma.js";
 
 const STAGING_LOADERS = {
-  downstream_vendors: { load: loadDownstreamVendorsStaging, label: "下游業者清單" },
+  downstream_vendors: { load: (sourceDocId) => loadDownstreamVendorsStaging(sourceDocId, "downstream_vendors"), label: "下游業者清單" },
   recall_products: { load: loadRecallProductsStaging, label: "預防性下架產品清單" },
+  fushou_downstream: { load: (sourceDocId) => loadDownstreamVendorsStaging(sourceDocId, "fushou_downstream"), label: "福壽自行揭露下游業者清單" },
+  fumao_downstream: { load: (sourceDocId) => loadDownstreamVendorsStaging(sourceDocId, "fumao_downstream"), label: "福懋自行揭露下游業者清單" },
+  taishan_downstream: { load: (sourceDocId) => loadDownstreamVendorsStaging(sourceDocId, "taishan_downstream"), label: "泰山自行揭露下游業者清單" },
 };
 
 export async function markStatus(sourceDocId, status, errorMessage = null) {
