@@ -23,6 +23,16 @@
    讓三家廠商自行揭露的資料可以併入同一張 StagingDownstreamVendor 表跟原始清單一起審核。
    三份来源 PDF 表頭欄位不完全一樣，各自有專屬 cleaner，細節見各 clean_* function 的說明。
    備註欄一律加上「{廠商}自行揭露」，方便審核時分辨資料來源。
+   三份來源 PDF 都存在「同一筆業者-品項-批號-有效日期整列重複出現好幾次」的問題
+   (福壽實測 96 列裡只有 36 列不重複、福懋 130 列裡只有 97 列不重複)，研判是 FDA
+   彙整原始通路明細時沒有先 distinct/JOIN 就直接輸出——三個 cleaner 都會以
+   縣市+業者+品項+批號+有效日期 為 key 去重，只保留第一次出現的那筆。
+
+所有帶「縣市」欄位的 doc type (downstream_vendors / recall_products / 三個廠商自行揭露)
+都會經過 normalize_county() 統一寫法：台/臺不一致 (台中/臺中)、缺市縣後綴 (南投/南投縣)、
+星號備註 (桃園市*)、2014 縣市改制前的舊名 (桃園縣->桃園市) 都會正規化成正式全名；
+空字串/None (通常是「零售」列，沒有對應的縣市) 原樣保留，「新竹」這種缺後綴但同時對應
+新竹市/新竹縣兩個不同行政區、無法從文字本身判斷是哪一個的案例也保留原文，不用猜的。
 """
 import argparse
 import csv
@@ -42,6 +52,60 @@ def extract_raw_tables(pdf_path):
             for table in page.extract_tables():
                 all_rows.extend(table)
     return all_rows
+
+
+# 台灣 22 個縣市的正式全名 (6 直轄市 + 3 市 + 13 縣)
+TAIWAN_COUNTIES = [
+    "臺北市", "新北市", "桃園市", "臺中市", "臺南市", "高雄市",
+    "基隆市", "新竹市", "嘉義市",
+    "新竹縣", "苗栗縣", "彰化縣", "南投縣", "雲林縣", "嘉義縣",
+    "屏東縣", "宜蘭縣", "花蓮縣", "臺東縣", "澎湖縣", "金門縣", "連江縣",
+]
+
+# 少數縣市在來源 PDF 常用「台」而非正式的「臺」，正規化時統一用正式全名，
+# 但只有「台」/「臺」都存在對應全名時才轉換 (新竹市/新竹縣沒有台/臺之分，不受影響)。
+_COUNTY_ALIASES = {name.replace("臺", "台"): name for name in TAIWAN_COUNTIES if "臺" in name}
+_COUNTY_ALIASES.update({name: name for name in TAIWAN_COUNTIES})
+
+# 2014 年縣市改制升格：舊制縣名 -> 現制市名。實測福懋來源 PDF 有「桃園縣」這種舊名殘留。
+_LEGACY_COUNTY_RENAMES = {
+    "台北縣": "新北市", "臺北縣": "新北市",
+    "台中縣": "臺中市", "臺中縣": "臺中市",
+    "台南縣": "臺南市", "臺南縣": "臺南市",
+    "高雄縣": "高雄市",
+    "桃園縣": "桃園市",
+}
+
+# 只有「去掉市/縣後綴」不會產生歧義的縣市才能安全補上後綴——新竹市/新竹縣兩個並存的
+# 行政區都可能被寫成「新竹」，無法從文字本身判斷是哪一個，所以「新竹」刻意不放進這個表，
+# 遇到就保留原文不加後綴，不用猜的。兩種寫法都要收 (台中/臺中 都可能是來源 PDF 的原文)。
+_BARE_NAME_TO_FULL = {}
+for _name in TAIWAN_COUNTIES:
+    if _name[:-1] == "新竹":
+        continue
+    _BARE_NAME_TO_FULL[_name[:-1]] = _name
+    _BARE_NAME_TO_FULL[_name[:-1].replace("臺", "台")] = _name
+
+
+def normalize_county(raw):
+    """把來源 PDF 五花八門的縣市寫法 (台/臺、缺市縣後綴、星號備註、舊制縣名) 統一成
+    正式全名。空字串/None 一律保留原樣 (通常代表「零售」或無法歸屬到特定縣市的列，
+    不是縣市名稱打錯字，不該被硬塞一個值)。無法判斷指哪個行政區的縣市名 (目前只有
+    「新竹」) 也保留原文，不用猜的。
+    """
+    if not raw:
+        return raw
+    name = raw.strip().strip("*").strip()
+    if not name:
+        return raw
+
+    if name in _LEGACY_COUNTY_RENAMES:
+        return _LEGACY_COUNTY_RENAMES[name]
+    if name in _COUNTY_ALIASES:
+        return _COUNTY_ALIASES[name]
+    if name in _BARE_NAME_TO_FULL:
+        return _BARE_NAME_TO_FULL[name]
+    return name
 
 
 def clean_downstream_list(rows):
@@ -87,12 +151,14 @@ def clean_downstream_list(rows):
         # (與批號/日期筆數無關)，要跟真正對應多筆批號/日期的換行分開處理
         n_bd = max(len(batch_lines), len(date_lines))
 
+        normalized_city = normalize_county(cur_city)
+
         if n_bd > 1 and len(item_lines) == n_bd:
             # 品項、批號、日期都對應同樣筆數 -> 逐筆展開成多列
             item_full = None
             for i in range(n_bd):
                 records.append({
-                    "序號": cur_seq, "縣市": cur_city, "業者": cur_biz,
+                    "序號": cur_seq, "縣市": normalized_city, "業者": cur_biz,
                     "品項": item_lines[i],
                     "批號": batch_lines[i] if i < len(batch_lines) else batch_lines[-1],
                     "有效日期": date_lines[i] if i < len(date_lines) else date_lines[-1],
@@ -103,7 +169,7 @@ def clean_downstream_list(rows):
             item_full = "".join(item_lines)
             for i in range(n_bd):
                 records.append({
-                    "序號": cur_seq, "縣市": cur_city, "業者": cur_biz,
+                    "序號": cur_seq, "縣市": normalized_city, "業者": cur_biz,
                     "品項": item_full,
                     "批號": batch_lines[i] if i < len(batch_lines) else batch_lines[-1],
                     "有效日期": date_lines[i] if i < len(date_lines) else date_lines[-1],
@@ -126,21 +192,38 @@ def clean_fushou_downstream(rows):
     """處理『福壽自行揭露下游業者清單』。5 欄 (無序號)，每一列資料已完整，
     不需要 forward fill；每頁重複表頭列直接過濾掉。序號欄位留空，交給
     StagingDownstreamVendor 沿用既有 seq 欄位型別 (String)，發布時不依賴它排序。
+
+    來源 PDF 同一筆「業者-品項-批號-有效日期」常常整列重複出現好幾次 (推測是
+    FDA 彙整原始通路明細時沒有先做過 distinct/JOIN 就直接輸出成清單)，實測樣本
+    96 列裡只有 36 列是不重複的。這裡以 縣市+業者+品項+批號+有效日期 為 key 去重，
+    保留第一次出現的順序，避免同一批油因為原始資料重複而在公開頁面上洗版。
     """
     records = []
+    seen = set()
     for row in rows:
         if row == FUSHOU_HEADER:
             continue
         if all(v is None for v in row):
             continue
         city, biz, item, batch, date = row
+        city = normalize_county((city or "").replace("\n", ""))
+        biz = (biz or "").replace("\n", "")
+        item = (item or "").replace("\n", "")
+        batch = (batch or "").replace("\n", "")
+        date = (date or "").replace("\n", "")
+
+        dedupe_key = (city, biz, item, batch, date)
+        if dedupe_key in seen:
+            continue
+        seen.add(dedupe_key)
+
         records.append({
             "序號": "",
-            "縣市": (city or "").replace("\n", ""),
-            "業者": (biz or "").replace("\n", ""),
-            "品項": (item or "").replace("\n", ""),
-            "批號": (batch or "").replace("\n", ""),
-            "有效日期": (date or "").replace("\n", ""),
+            "縣市": city,
+            "業者": biz,
+            "品項": item,
+            "批號": batch,
+            "有效日期": date,
             "備註": "福壽自行揭露",
         })
     return records
@@ -170,7 +253,7 @@ def clean_fumao_downstream(rows):
             continue
         parsed.append({
             "序號": seq or "",
-            "縣市": (city or "").replace("\n", ""),
+            "縣市": normalize_county((city or "").replace("\n", "")),
             "業者": (biz or "").replace("\n", ""),
             "品項": (item or "").replace("\n", "") if item is not None else None,
             "批號": (batch or "").replace("\n", ""),
@@ -189,7 +272,12 @@ def clean_fumao_downstream(rows):
         if counts:
             majority_item_by_batch[key] = counts.most_common(1)[0][0]
 
+    # 來源 PDF 同一筆「業者-品項-批號-有效日期」常常整列重複出現好幾次 (推測是 FDA
+    # 彙整原始通路明細時沒有先做過 distinct/JOIN)，實測樣本 130 列裡只有 97 列不重複
+    # (序號本身逐列遞增不重複，但只是流水號，不是有意義的識別欄位，去重時不看它)。
+    # 去重 key 不含序號；保留第一次出現的序號/順序。
     records = []
+    seen = set()
     for r in parsed:
         flag = "福懋自行揭露"
         if r["_item_missing"]:
@@ -199,8 +287,15 @@ def clean_fumao_downstream(rows):
             majority_item = majority_item_by_batch.get(key)
             if majority_item and r["品項"] != majority_item and len(batch_groups[key]) > 1:
                 flag += "；品項文字與同批號其他列不一致，疑似欄位文字交錯拼接，請人工複核"
+
+        item = r["品項"] or ""
+        dedupe_key = (r["縣市"], r["業者"], item, r["批號"], r["有效日期"])
+        if dedupe_key in seen:
+            continue
+        seen.add(dedupe_key)
+
         records.append({
-            "序號": r["序號"], "縣市": r["縣市"], "業者": r["業者"], "品項": r["品項"] or "",
+            "序號": r["序號"], "縣市": r["縣市"], "業者": r["業者"], "品項": item,
             "批號": r["批號"], "有效日期": r["有效日期"], "備註": flag,
         })
     return records
@@ -244,7 +339,7 @@ def clean_taishan_downstream(rows):
         if gross_weight:
             flag += f"；產品毛重：{gross_weight}"
 
-        city = (city or "").replace("\n", "")
+        city = normalize_county((city or "").replace("\n", ""))
         biz = (biz or "").replace("\n", "")
         item = (item or "").replace("\n", "")
         lot = (lot or "").replace("\n", "")
@@ -278,7 +373,7 @@ def clean_recall_list(rows):
         biz_seq, city, biz, prod_seq, prod_name, date = row
         records.append({
             "業者序號": biz_seq,
-            "縣市": city,
+            "縣市": normalize_county(city),
             "業者": biz,
             "產品序號": prod_seq,
             "產品名稱": (prod_name or "").replace("\n", ""),
