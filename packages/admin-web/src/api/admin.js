@@ -5,6 +5,8 @@ const BASE = `${API_BASE}/api/admin`
 const PUBLIC_BASE = `${API_BASE}/api/public`
 
 // docType -> 後端 route 片段（staging/publish 共用同一組命名）
+// fushou/fumao/taishan_downstream 上傳後併入同一張 downstream-vendors staging 表一起審核，
+// 所以這三種只有上傳用的 docType key，沒有各自的 staging/publish route。
 const DOC_TYPE_PATHS = {
   recall_products: 'recall-products',
   downstream_vendors: 'downstream-vendors',

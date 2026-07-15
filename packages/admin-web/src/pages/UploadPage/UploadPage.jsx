@@ -4,7 +4,9 @@ import { InboxOutlined } from '@ant-design/icons'
 import Header from '../../component/Header'
 import { uploadPdf, uploadFlowChartPdf } from '../../api/admin'
 
-// 手動上傳的來源 PDF；前兩種走解析＋待審核，流向圖逐頁轉圖後直接發布
+// 手動上傳的來源 PDF；前兩種走解析＋待審核，流向圖逐頁轉圖後直接發布。
+// 廠商自行揭露的三份清單（福壽/福懋/泰山）欄位跟下游業者清單相同，解析後併入同一批
+// 待審核資料一起審核，備註欄會自動標記「OO自行揭露」方便分辨來源。
 const UPLOAD_SECTIONS = [
   {
     key: 'recall_products',
@@ -20,6 +22,30 @@ const UPLOAD_SECTIONS = [
     description: '上傳「下游業者清單」PDF，系統會自動解析並送入待審核。',
     fdaUrl: 'https://www.fda.gov.tw/tc/siteList.aspx?sid=13708',
     upload: (file) => uploadPdf('downstream_vendors', file),
+    successMessage: (file) => `「${file.name}」上傳成功，已送入解析與待審核流程`,
+  },
+  {
+    key: 'fushou_downstream',
+    title: '福壽自行揭露下游業者清單 PDF 上傳',
+    description: '上傳福壽自行揭露的下游業者清單 PDF，系統會自動解析、備註標記「福壽自行揭露」並送入待審核（跟下游廠商清單合併審核）。',
+    fdaUrl: 'https://www.fda.gov.tw/tc/siteList.aspx?sid=13708',
+    upload: (file) => uploadPdf('fushou_downstream', file),
+    successMessage: (file) => `「${file.name}」上傳成功，已送入解析與待審核流程`,
+  },
+  {
+    key: 'fumao_downstream',
+    title: '福懋自行揭露下游業者清單 PDF 上傳',
+    description: '上傳福懋自行揭露的下游業者清單 PDF，系統會自動解析、備註標記「福懋自行揭露」並送入待審核（跟下游廠商清單合併審核）。',
+    fdaUrl: 'https://www.fda.gov.tw/tc/siteList.aspx?sid=13708',
+    upload: (file) => uploadPdf('fumao_downstream', file),
+    successMessage: (file) => `「${file.name}」上傳成功，已送入解析與待審核流程`,
+  },
+  {
+    key: 'taishan_downstream',
+    title: '泰山自行揭露下游業者清單 PDF 上傳',
+    description: '上傳泰山自行揭露的下游廠商產品名單 PDF，系統會自動解析、備註標記「泰山自行揭露」並送入待審核（跟下游廠商清單合併審核）。',
+    fdaUrl: 'https://www.fda.gov.tw/tc/siteList.aspx?sid=13708',
+    upload: (file) => uploadPdf('taishan_downstream', file),
     successMessage: (file) => `「${file.name}」上傳成功，已送入解析與待審核流程`,
   },
   {
