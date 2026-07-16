@@ -13,7 +13,7 @@ This started as a small data-extraction prototype and is growing into a full sys
 
 Source PDFs tracked by the pipeline:
 
-- `source data/下游業者360家清單_(截至7月9日).pdf` — list of ~360 downstream vendors/retailers that received the product, with lot numbers and expiry dates. Auto-extracted, but still needs a human-added 備註 before publish.
+- `source data/mockup 下游業者清單.pdf` — mockup of the reformatted (1150716) downstream vendors/retailers list (~1322 vendors covering 福壽/福懋/泰山 brands), with lot numbers and expiry dates. Auto-extracted, but still needs a human-added 備註 before publish. The pre-1150716 layout (序號 first, 縣市 second, ~360 vendors) is no longer supported — the new layout moved 縣市 into a tall merged first column that needs geometry-based recovery (see Architecture below).
 - `source data/預防性下架產品清單.pdf` — list of products pulled from shelves as a precaution. Auto-extracted.
 - 受影響油品資訊 (affected oils) — image+text PDF on the same FDA page as the downstream list, entered manually by an admin; not run through `extract_pdfs.py`.
 
@@ -22,7 +22,7 @@ Output CSVs from the Python script go to `output/`; versioned raw PDF downloads 
 ## Running the extraction script standalone
 
 ```bash
-python packages/extract-pdfs/extract_pdfs.py --doc-type downstream_vendors --input "source data/下游業者360家清單_(截至7月9日).pdf" --output "output/下游業者清單.csv"
+python packages/extract-pdfs/extract_pdfs.py --doc-type downstream_vendors --input "source data/mockup 下游業者清單.pdf" --output "output/下游業者清單.csv"
 python packages/extract-pdfs/extract_pdfs.py --doc-type recall_products --input "source data/預防性下架產品清單.pdf" --output "output/預防性下架產品清單.csv"
 ```
 
@@ -45,10 +45,10 @@ There is no test suite, lint config, or build step — this is a one-shot data-c
 
 `extract_pdfs.py` has three stages per PDF:
 
-1. **`extract_raw_tables`** — pulls raw table rows (as lists, with `None` for empty cells) out of every page via `pdfplumber`. Table structure varies per page (repeated headers, page-break artifacts), so nothing is cleaned yet at this stage.
+1. **`extract_raw_tables`** — pulls raw table rows (as lists, with `None` for empty cells) out of every page via `pdfplumber`. Table structure varies per page (repeated headers, page-break artifacts), so nothing is cleaned yet at this stage. `downstream_vendors` is the exception: it uses its own extractor, `extract_downstream_rows` (a per-`DOC_TYPES`-entry `extractor` override), because the reformatted list needs page geometry that `extract_raw_tables` throws away: 縣市 is a tall merged first column whose text `extract_tables()` mostly fails to assign to any row (on some pages the whole column falls outside the detected table, leaving 5-column rows) — the extractor recovers it by matching county-label word coordinates against table-row bboxes, then forward-fills across pages. It also reassembles rows that straddle a page break, where 序號/業者/品項 render above the next page's table bbox while 批號/有效日期 stay in the previous page's last row.
 
-2. **Per-PDF cleaning function** — the two source PDFs have different quirks, so each gets its own cleaner:
-   - `clean_downstream_list` (for 下游業者360家清單): cells are frequently `None` because a vendor spans multiple product rows in the source table — requires **forward-filling** 序號/縣市/業者 from the last non-`None` row, and **exploding** cells where a single cell packs multiple 批號/有效日期 values separated by `\n`. It distinguishes "text wrapped because it's long" from "genuinely multiple values" by comparing line counts across the 品項/批號/有效日期 columns (`n_bd` logic). Rows it can't confidently resolve get flagged in a `備註` column for manual review rather than dropped or guessed.
+2. **Per-PDF cleaning function** — the source PDFs have different quirks, so each gets its own cleaner:
+   - `clean_downstream_list` (for the downstream vendors list): 序號/業者 cells are frequently `None` because a vendor spans multiple product rows in the source table — requires **forward-filling** from the last non-`None` row (縣市 arrives pre-resolved per row from `extract_downstream_rows`), and **exploding** cells where a single cell packs multiple 批號/有效日期 values separated by `\n`. It distinguishes "text wrapped because it's long" from "genuinely multiple values" by comparing line counts across the 品項/批號/有效日期 columns (`n_bd` logic). Rows it can't confidently resolve get flagged in a `備註` column for manual review rather than dropped or guessed — including 批號 values the source file itself corrupted into Excel scientific notation (e.g. `2.02704e+13`), which are kept verbatim and flagged since the full lot number is unrecoverable.
    - `clean_recall_list` (for 預防性下架產品清單): rows are already complete (no forward-fill needed); only strips stray `\n` inside the 有效日期 cell.
 
 3. **`write_csv`** — writes `utf-8-sig` (BOM) so the CSVs open correctly in Excel on Windows with Traditional Chinese headers intact.

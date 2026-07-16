@@ -6,12 +6,23 @@
 
 支援的 --doc-type:
 
-1. downstream_vendors (下游業者360家清單)
-   欄位: 序號, 縣市, 業者, 品項, 批號, 有效日期
-   - 同一業者有多項產品時，序號/縣市/業者 只在第一列出現，之後為 None -> 需要 forward fill
+1. downstream_vendors (福壽、福懋、泰山油品下游業者清單；1150716 改版後的版面)
+   欄位: 縣市, 序號, 業者, 品項, 批號, 有效日期 (改版後縣市移到第一欄)
+   - 縣市是跨很多業者的大合併儲存格，extract_tables() 幾乎抓不回來：部分頁面整個
+     縣市欄不在偵測到的表格範圍內 (該頁只剩 5 欄)，就算在表格內、合併儲存格的文字
+     也大多不會被指配到任何列。因此這個 doc type 不走 extract_raw_tables()，改用
+     extract_downstream_rows()：逐頁拿表格列的 bbox 對照表格左緣縣市標籤文字的
+     y 座標 (實測標籤頂端對齊它起始的那一列)，把縣市解回起始列再往下 forward fill
+     (含跨頁)，輸出時已補回縣市、統一成 6 欄
+   - 同一業者有多項產品時，序號/業者 只在第一列出現，之後為 None -> 需要 forward fill
    - 同一產品有多個批號/有效日期時，儲存格內用 \n 分隔多筆 -> 展開成多列
    - 少數列品項也是 None -> 視為延續前一列的品項 (只是多列出批號/日期)
-   - 頁面第一列的標題文字、每頁重複的表頭列、最後的備註列 -> 過濾掉
+   - 少數列批號被來源檔以 Excel 科學記號顯示 (例: 2.02704e+13)，完整批號無法還原
+     -> 原樣輸出，備註標「原資料以科學記號紀載，無從判定油品序號」交人工複核
+   - 資料列跨頁時，序號/業者/品項的文字會落在下一頁表格 bbox 上方之外 (批號/日期
+     則留在前一頁最後一列) -> 依欄位 x 區間把孤兒文字重組回前一頁最後一列，
+     並標備註交人工複核 (見 _orphan_row_values / _patch_straddling_row)
+   - 表頭列只在第一頁出現；頁首標題/批號說明文字不在表格範圍內，不需過濾
 
 2. recall_products (預防性下架產品清單)
    欄位: 業者序號, 縣市, 業者, 產品序號, 產品名稱, 有效日期
@@ -40,7 +51,7 @@ import os
 from collections import Counter
 import pdfplumber
 
-HEADER_1 = ["序號", "縣市", "業者", "品項", "批號", "有效日期"]
+HEADER_1 = ["縣市", "序號", "業者", "品項", "批號", "有效日期"]
 HEADER_2 = ["業者序號", "縣市", "業者", "產品序號", "產品名稱", "有效日期"]
 
 
@@ -51,6 +62,138 @@ def extract_raw_tables(pdf_path):
         for page in pdf.pages:
             for table in page.extract_tables():
                 all_rows.extend(table)
+    return all_rows
+
+
+# 縣市標籤的搜尋範圍: 表格左緣再往右這麼多 pt 以內的文字才視為縣市欄標籤。
+# 縣市欄在表格範圍內的頁面 (6 欄頁) 剛好涵蓋整個縣市欄；縣市欄落在表格範圍外的
+# 頁面 (5 欄頁) 則涵蓋表格左側的標籤區，兩種版面實測都適用。
+_COUNTY_STRIP_WIDTH = 28
+
+
+# 跨頁列重組時加在備註的旗標 (見 _patch_straddling_row)
+_STRADDLE_FLAG = "資料列跨頁，序號/業者/品項由座標重組(請人工複核)"
+
+
+def _column_intervals(table):
+    """回傳表格由左到右的欄位 x 區間 [(x0, x1), ...] (由所有儲存格 bbox 去重而來)。"""
+    return sorted({(c[0], c[2]) for c in table.cells if c is not None})
+
+
+def _orphan_row_values(page, table, n_cols):
+    """抓「表格上緣之外」的跨頁列文字，依欄位 x 區間重組成一列的值。
+
+    新版面資料列跨頁時，序號/業者/品項的文字會落在下一頁表格 bbox 上方 (該列的
+    批號/日期則留在前一頁 grid 的最後一列，序號/業者/品項為 None)。這裡把上方的
+    孤兒文字依欄位 x 區間分桶重組；只有「序號欄的值是純數字」才視為有效的跨頁列
+    (排除第一頁表格上方的標題/批號說明文字)。沒有有效跨頁列時回傳 None。
+    """
+    intervals = _column_intervals(table)
+    if len(intervals) != n_cols:
+        return None
+    top, x0, x1 = table.bbox[1], table.bbox[0], table.bbox[2]
+    buckets = [[] for _ in intervals]
+    for word in page.extract_words():
+        if word["top"] >= top or word["x0"] < x0 - 5 or word["x1"] > x1 + 5:
+            continue
+        center = (word["x0"] + word["x1"]) / 2
+        for ci, (cx0, cx1) in enumerate(intervals):
+            if cx0 - 2 <= center <= cx1 + 2:
+                buckets[ci].append(word)
+                break
+    values = [
+        " ".join(w["text"] for w in sorted(bucket, key=lambda w: w["x0"])) or None
+        for bucket in buckets
+    ]
+    seq = values[1] if n_cols == 6 else values[0]
+    if seq is None or not seq.isdigit():
+        return None
+    return values
+
+
+def _patch_straddling_row(all_rows, orphan_values, n_cols, current_county):
+    """把跨頁列重組回資料。前一頁最後一列如果是「序號/業者為 None 的批號列」，
+    孤兒文字就是它遺失的序號/業者/品項 -> 就地回補；否則當成獨立新列附加。
+    兩種情況都標 _STRADDLE_FLAG 交人工複核。"""
+    if n_cols == 6:
+        _, seq, biz, item, batch, date = orphan_values
+    else:
+        seq, biz, item, batch, date = orphan_values
+    prev = all_rows[-1] if all_rows else None
+    if prev is not None and prev[0] is None and prev[2] is None:
+        prev[0] = seq
+        prev[2] = biz
+        if prev[3] is None:
+            prev[3] = item
+        prev[6] = _STRADDLE_FLAG
+    else:
+        all_rows.append([seq, current_county, biz, item, batch, date, _STRADDLE_FLAG])
+
+
+def extract_downstream_rows(pdf_path):
+    """逐頁抽取 1150716 改版後的下游業者清單，回傳統一 7 欄的 rows:
+    [序號, 縣市, 業者, 品項, 批號, 有效日期, 抽取旗標] (順序對齊 clean_downstream_list
+    的輸入；抽取旗標只在跨頁列重組時有值，其餘為 None)。
+
+    縣市是跨很多業者的大合併儲存格，extract_tables() 大多抓不回來 (詳見模組 docstring)，
+    這裡改用幾何位置還原: 表格左緣 _COUNTY_STRIP_WIDTH 內的非數字文字視為縣市標籤，
+    其頂端 y 座標落在哪一列的 bbox 內、縣市就從那一列開始生效，之後 forward fill
+    (含跨頁)。標籤若沒落在任何列的 bbox 內 (例如剛好壓在格線上)，退而取起點最接近的
+    那一列，不會默默丟掉。
+    """
+    all_rows = []
+    current_county = None
+    with pdfplumber.open(pdf_path) as pdf:
+        for page in pdf.pages:
+            for table in page.find_tables():
+                grid = table.extract()
+                if not grid:
+                    continue
+                n_cols = len(grid[0])
+
+                strip_right = table.bbox[0] + _COUNTY_STRIP_WIDTH
+                county_at_row = {}
+                for word in page.extract_words():
+                    text = word["text"].strip()
+                    if word["x1"] > strip_right or not text:
+                        continue
+                    if text.isdigit() or text in ("縣市", "序號"):
+                        continue
+                    row_idx = None
+                    for i, table_row in enumerate(table.rows):
+                        if table_row.bbox[1] <= word["top"] < table_row.bbox[3]:
+                            row_idx = i
+                            break
+                    if row_idx is None and table.rows:
+                        row_idx = min(
+                            range(len(table.rows)),
+                            key=lambda i: abs(table.rows[i].bbox[1] - word["top"]),
+                        )
+                    if row_idx is not None:
+                        county_at_row[row_idx] = text
+
+                orphan_values = _orphan_row_values(page, table, n_cols)
+                if orphan_values is not None:
+                    _patch_straddling_row(all_rows, orphan_values, n_cols, current_county)
+
+                for i, cells in enumerate(grid):
+                    if i in county_at_row:
+                        current_county = county_at_row[i]
+                    if all(v is None for v in cells):
+                        continue
+                    if len(cells) == 6:
+                        # 縣市欄在表格範圍內的頁面: 第 0 欄是縣市 (大多為 None，
+                        # 就算有值也已由上面的幾何比對涵蓋)，丟棄改用 current_county
+                        _, seq, biz, item, batch, date = cells
+                    elif len(cells) == 5:
+                        # 縣市欄落在表格範圍外的頁面
+                        seq, biz, item, batch, date = cells
+                    else:
+                        print(f"警告: 跳過無法辨識的 {len(cells)} 欄列: {cells}")
+                        continue
+                    if [seq, biz, item, batch, date] == HEADER_1[1:]:
+                        continue
+                    all_rows.append([seq, current_county, biz, item, batch, date, None])
     return all_rows
 
 
@@ -108,37 +251,35 @@ def normalize_county(raw):
     return name
 
 
+# 批號被來源檔以 Excel 科學記號顯示 (例: 2.02704e+13) 時的備註旗標。
+# 科學記號只保留前幾位有效數字，完整批號無法從 PDF 還原，原樣輸出交人工複核。
+_SCI_NOTATION_FLAG = "原資料以科學記號紀載，無從判定油品序號"
+
+
+def _is_sci_notation(batch_value):
+    return "e+" in batch_value.lower()
+
+
 def clean_downstream_list(rows):
-    """處理『下游業者360家清單』，回傳展開後的 dict list，並附上待人工複核的旗標。"""
+    """處理『下游業者清單』(輸入來自 extract_downstream_rows，縣市已逐列補回)，
+    回傳展開後的 dict list，並附上待人工複核的旗標。"""
     records = []
-    cur_seq = cur_city = cur_biz = None
+    cur_seq = cur_biz = None
     last_item = None
-    seen_header = False
 
     for row in rows:
-        seq, city, biz, item, batch, date = row
+        seq, city, biz, item, batch, date, extract_flag = row
 
-        # 跳過標題列 (只有第一欄有值，其餘為 None)
-        if seq is not None and all(v is None for v in (city, biz, item, batch, date)):
-            continue
-        # 跳過每頁重複的表頭列
-        if [seq, city, biz, item, batch, date] == HEADER_1:
-            continue
-        # 跳過結尾備註列 (以「備註」開頭)
-        if seq is not None and isinstance(seq, str) and seq.startswith("備註"):
-            continue
-
-        flag = ""
+        flag = extract_flag or ""
 
         if seq is not None:
-            cur_seq, cur_city, cur_biz = seq, city, biz
-        else:
-            # 少數列只出現縣市、序號與業者仍為 None -> 來源 PDF 排版異常，無法確定業者
-            if city is not None and biz is None:
-                cur_city = city
+            cur_seq, cur_biz = seq, biz
+            if biz is None:
                 flag = "業者資料缺失(來源PDF排版異常，請人工複核)"
-            elif city is not None:
-                cur_city = city
+        elif biz is not None:
+            # 序號 None 但業者有值 -> 來源 PDF 排版異常，無法確定序號歸屬
+            cur_biz = biz
+            flag = "序號資料缺失(來源PDF排版異常，請人工複核)"
 
         if item is None:
             item = last_item
@@ -151,30 +292,29 @@ def clean_downstream_list(rows):
         # (與批號/日期筆數無關)，要跟真正對應多筆批號/日期的換行分開處理
         n_bd = max(len(batch_lines), len(date_lines))
 
-        normalized_city = normalize_county(cur_city)
+        normalized_city = normalize_county(city)
 
         if n_bd > 1 and len(item_lines) == n_bd:
             # 品項、批號、日期都對應同樣筆數 -> 逐筆展開成多列
             item_full = None
-            for i in range(n_bd):
-                records.append({
-                    "序號": cur_seq, "縣市": normalized_city, "業者": cur_biz,
-                    "品項": item_lines[i],
-                    "批號": batch_lines[i] if i < len(batch_lines) else batch_lines[-1],
-                    "有效日期": date_lines[i] if i < len(date_lines) else date_lines[-1],
-                    "備註": flag,
-                })
+            item_of = lambda i: item_lines[i]
         else:
             # 品項是單一名稱 (可能因太長被換行包住，直接接起來)，套用到每筆批號/日期
             item_full = "".join(item_lines)
-            for i in range(n_bd):
-                records.append({
-                    "序號": cur_seq, "縣市": normalized_city, "業者": cur_biz,
-                    "品項": item_full,
-                    "批號": batch_lines[i] if i < len(batch_lines) else batch_lines[-1],
-                    "有效日期": date_lines[i] if i < len(date_lines) else date_lines[-1],
-                    "備註": flag,
-                })
+            item_of = lambda i: item_full
+
+        for i in range(n_bd):
+            batch_i = batch_lines[i] if i < len(batch_lines) else batch_lines[-1]
+            row_flag = flag
+            if batch_i and _is_sci_notation(batch_i):
+                row_flag = f"{flag}；{_SCI_NOTATION_FLAG}" if flag else _SCI_NOTATION_FLAG
+            records.append({
+                "序號": cur_seq, "縣市": normalized_city, "業者": cur_biz,
+                "品項": item_of(i),
+                "批號": batch_i,
+                "有效日期": date_lines[i] if i < len(date_lines) else date_lines[-1],
+                "備註": row_flag,
+            })
 
         last_item = item_full if item_full is not None else item_lines[0]
 
@@ -392,6 +532,8 @@ def write_csv(path, fieldnames, records):
 
 DOC_TYPES = {
     "downstream_vendors": {
+        # 縣市合併儲存格要靠幾何位置還原，不走預設的 extract_raw_tables
+        "extractor": extract_downstream_rows,
         "cleaner": clean_downstream_list,
         "fieldnames": ["序號", "縣市", "業者", "品項", "批號", "有效日期", "備註"],
     },
@@ -419,7 +561,8 @@ DOWNSTREAM_LIKE_DOC_TYPES = {"downstream_vendors", "fushou_downstream", "fumao_d
 
 def process(doc_type, input_path, output_path):
     config = DOC_TYPES[doc_type]
-    rows = extract_raw_tables(input_path)
+    extractor = config.get("extractor", extract_raw_tables)
+    rows = extractor(input_path)
     records = config["cleaner"](rows)
     write_csv(output_path, config["fieldnames"], records)
     return records
