@@ -17,7 +17,7 @@ function RecallHero() {
         {loading ? "—" : total.toLocaleString("zh-TW", { maximumFractionDigits: 3 })}
         <span className="hero-unit"> 公噸</span>
       </p>
-      <p className="hero-label">已下架回收</p>
+      <p className="hero-label">不合格已下架回收</p>
       {recallStats.map((r) => (
         <p key={r.id} className="hero-asof">
           {r.incident}回收 {r.recalledTonnage} 噸｜統計截至 {r.asOf}
